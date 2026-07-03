@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: sindhi-samaj-marriage-bureau
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DATA_DIR
+        value: /var/data
+    disk:
+      name: data
+      mountPath: /var/data
+      sizeGB: 1
+# NOTE: persistent disks require a paid Render instance type. On the free
+# plan the disk block is ignored, and the SQLite database + uploaded photos
+# will reset on every redeploy. Remove DATA_DIR / disk above to just use the
+# app folder, or upgrade the plan for real persistence.

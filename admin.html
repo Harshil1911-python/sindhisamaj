@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — Sindhi Samaj Surat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14161f; --indigo:#1b3a63; --maroon:#8b1e3f; --gold:#c9972b; --gold-soft:#e0b559;
+    --cream:#f6f0e4; --cream-soft:#fbf8f1; --line: rgba(201,151,43,0.35); --text-muted:#5a5648;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Mukta', sans-serif; color:var(--ink); background:var(--cream-soft); min-height:100vh;}
+  h1,h2,h3{font-family:'Cormorant Garamond', serif; font-weight:700;}
+  a{text-decoration:none; color:inherit;}
+
+  header{background:var(--ink); padding:14px 24px; position:sticky; top:0; z-index:50;}
+  .nav-wrap{max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;}
+  .brand{display:flex; align-items:center; gap:12px;}
+  .brand-mark{
+    width:32px; height:32px; border-radius:50%;
+    background:conic-gradient(from 45deg, var(--gold), var(--maroon), var(--indigo), var(--gold));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Cormorant Garamond', serif; font-weight:700; color:var(--cream); font-size:0.9rem;
+  }
+  .brand-text{color:var(--cream-soft); font-family:'Cormorant Garamond', serif; font-weight:700; font-size:1.05rem;}
+  .nav-right{display:flex; align-items:center; gap:16px;}
+  .nav-right span{color:rgba(246,240,228,0.7); font-size:0.85rem;}
+  .btn-signout{background:transparent; border:1px solid rgba(246,240,228,0.4); color:var(--cream-soft); padding:7px 14px; border-radius:3px; font-size:0.82rem; cursor:pointer;}
+  .btn-signout:hover{border-color:var(--gold-soft); color:var(--gold-soft);}
+
+  .ajrak-strip{
+    height:8px; width:100%;
+    background-image:
+      linear-gradient(135deg, var(--gold) 25%, transparent 25%),
+      linear-gradient(225deg, var(--gold) 25%, transparent 25%),
+      linear-gradient(45deg, var(--gold) 25%, transparent 25%),
+      linear-gradient(315deg, var(--gold) 25%, var(--indigo) 25%);
+    background-position: 9px 0, 9px 0, 0 0, 0 0;
+    background-size: 18px 18px; background-repeat: repeat-x; background-color: var(--maroon);
+  }
+
+  main{max-width:1200px; margin:0 auto; padding:36px 24px 80px;}
+  .page-head{margin-bottom:30px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px;}
+  .page-head h1{font-size:1.9rem; color:var(--indigo);}
+  .view-btn{
+    background:var(--maroon); color:#fff; padding:14px 30px; border-radius:3px; font-weight:700;
+    font-size:1rem; display:inline-flex; align-items:center; gap:10px; box-shadow:0 8px 20px rgba(139,30,63,0.25);
+    transition:.2s;
+  }
+  .view-btn:hover{background:#a4254a; transform:translateY(-2px);}
+
+  .stats-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-bottom:36px;}
+  .stat-card{background:var(--cream); border:1px solid var(--line); border-left:4px solid var(--gold); padding:22px 24px; border-radius:2px;}
+  .stat-card .n{font-family:'Cormorant Garamond',serif; font-size:2.1rem; font-weight:700; color:var(--indigo);}
+  .stat-card .l{font-size:0.82rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-top:4px;}
+
+  .panels{display:grid; grid-template-columns:1fr 1fr; gap:22px;}
+  .panel{background:var(--cream); border:1px solid var(--line); border-left:4px solid var(--indigo); padding:26px 26px; border-radius:2px;}
+  .panel h2{font-size:1.25rem; color:var(--indigo); margin-bottom:6px;}
+  .panel p.desc{color:var(--text-muted); font-size:0.85rem; margin-bottom:18px;}
+  .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:11px 20px; border-radius:3px;
+    font-weight:600; font-size:0.88rem; cursor:pointer; border:none; transition:.15s;
+  }
+  .btn-gold{background:var(--gold); color:var(--ink);}
+  .btn-gold:hover{background:var(--gold-soft);}
+  .btn-outline{background:transparent; border:1px solid var(--indigo); color:var(--indigo);}
+  .btn-outline:hover{background:rgba(27,58,99,0.08);}
+  .btn-danger{background:transparent; border:1px solid var(--maroon); color:var(--maroon);}
+  .btn-danger:hover{background:rgba(139,30,63,0.08);}
+  input[type=file]{font-size:0.82rem;}
+  input[type=text], input[type=password]{
+    padding:10px 12px; font-size:0.9rem; border:1px solid rgba(27,58,99,0.25); border-radius:2px; background:#fff; flex:1;
+  }
+  .msg{margin-top:12px; font-size:0.84rem; padding:9px 12px; border-radius:2px; display:none;}
+  .msg.show{display:block;}
+  .msg.ok{background:rgba(27,58,99,0.1); color:var(--indigo);}
+  .msg.err{background:rgba(139,30,63,0.1); color:var(--maroon);}
+
+  @media (max-width:900px){
+    .stats-grid{grid-template-columns:1fr 1fr;}
+    .panels{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav-wrap">
+    <div class="brand"><div class="brand-mark">S</div><div class="brand-text">Admin — Sindhi Samaj Surat</div></div>
+    <div class="nav-right">
+      <span id="whoami"></span>
+      <button class="btn-signout" id="signOutBtn">Sign Out</button>
+    </div>
+  </div>
+</header>
+<div class="ajrak-strip"></div>
+
+<main>
+  <div class="page-head">
+    <h1>Dashboard</h1>
+    <a href="view.html" class="view-btn">&#128065; View Profiles (Walk-in Mode)</a>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><div class="n" id="statTotal">—</div><div class="l">Total Profiles</div></div>
+    <div class="stat-card"><div class="n" id="statBrides">—</div><div class="l">Bride Profiles</div></div>
+    <div class="stat-card"><div class="n" id="statGrooms">—</div><div class="l">Groom Profiles</div></div>
+    <div class="stat-card"><div class="n" id="statActive">—</div><div class="l">Active Profiles</div></div>
+  </div>
+
+  <div class="panels">
+    <div class="panel">
+      <h2>CSV Export</h2>
+      <p class="desc">Download all profile data in the exact register.html field format as a CSV file.</p>
+      <div class="row">
+        <a href="/export/csv" class="btn btn-gold">Export All Profiles (CSV)</a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>CSV Import</h2>
+      <p class="desc">Bulk-add profiles from a CSV file using the same field format.</p>
+      <div class="row">
+        <input type="file" id="csvFile" accept=".csv">
+        <button class="btn btn-outline" id="importBtn">Import</button>
+      </div>
+      <div class="msg" id="importMsg"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Backup</h2>
+      <p class="desc">Download a full copy of the database (.db file) for safekeeping.</p>
+      <div class="row">
+        <a href="/backup" class="btn btn-gold">Download Backup</a>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Restore</h2>
+      <p class="desc">Replace the current database with a previously downloaded backup file.</p>
+      <div class="row">
+        <input type="file" id="restoreFile" accept=".db,.sqlite,.sqlite3">
+        <button class="btn btn-danger" id="restoreBtn">Restore</button>
+      </div>
+      <div class="msg" id="restoreMsg"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Change My Password</h2>
+      <p class="desc">Update the password for the account you're currently signed in with.</p>
+      <div class="row" style="margin-bottom:10px;">
+        <input type="password" id="curPass" placeholder="Current password">
+      </div>
+      <div class="row">
+        <input type="password" id="newPass" placeholder="New password (min 6 chars)">
+        <button class="btn btn-outline" id="changePassBtn">Update</button>
+      </div>
+      <div class="msg" id="passMsg"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Add Another Admin</h2>
+      <p class="desc">Create additional admin accounts for other bureau staff.</p>
+      <div class="row" style="margin-bottom:10px;">
+        <input type="text" id="newAdminUser" placeholder="Username">
+      </div>
+      <div class="row">
+        <input type="password" id="newAdminPass" placeholder="Password (min 6 chars)">
+        <button class="btn btn-outline" id="addAdminBtn">Create</button>
+      </div>
+      <div class="msg" id="adminMsg"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+  async function loadMe(){
+    const res = await fetch('/api/me');
+    const d = await res.json();
+    if (!d.authenticated){ window.location.href = 'signin.html'; return; }
+    document.getElementById('whoami').textContent = 'Signed in as ' + d.username;
+  }
+  async function loadStats(){
+    const res = await fetch('/api/stats');
+    const d = await res.json();
+    if (d.success){
+      document.getElementById('statTotal').textContent = d.total;
+      document.getElementById('statBrides').textContent = d.brides;
+      document.getElementById('statGrooms').textContent = d.grooms;
+      document.getElementById('statActive').textContent = d.active;
+    }
+  }
+  document.getElementById('signOutBtn').addEventListener('click', async () => {
+    await fetch('/signout', {method:'POST'});
+    window.location.href = 'signin.html';
+  });
+
+  function showMsg(el, text, ok){
+    el.textContent = text;
+    el.className = 'msg show ' + (ok ? 'ok' : 'err');
+  }
+
+  document.getElementById('importBtn').addEventListener('click', async () => {
+    const f = document.getElementById('csvFile').files[0];
+    const el = document.getElementById('importMsg');
+    if (!f){ showMsg(el, 'Choose a CSV file first.', false); return; }
+    const fd = new FormData(); fd.append('file', f);
+    try {
+      const res = await fetch('/import/csv', {method:'POST', body:fd});
+      const d = await res.json();
+      if (d.success){ showMsg(el, `Imported ${d.inserted} profiles.`, true); loadStats(); }
+      else showMsg(el, d.message || 'Import failed.', false);
+    } catch(e){ showMsg(el, 'Could not reach server.', false); }
+  });
+
+  document.getElementById('restoreBtn').addEventListener('click', async () => {
+    const f = document.getElementById('restoreFile').files[0];
+    const el = document.getElementById('restoreMsg');
+    if (!f){ showMsg(el, 'Choose a backup file first.', false); return; }
+    if (!confirm('This will replace the current database. Continue?')) return;
+    const fd = new FormData(); fd.append('file', f);
+    try {
+      const res = await fetch('/restore', {method:'POST', body:fd});
+      const d = await res.json();
+      if (d.success){ showMsg(el, 'Database restored successfully.', true); loadStats(); }
+      else showMsg(el, d.message || 'Restore failed.', false);
+    } catch(e){ showMsg(el, 'Could not reach server.', false); }
+  });
+
+  document.getElementById('changePassBtn').addEventListener('click', async () => {
+    const cur = document.getElementById('curPass').value;
+    const nw = document.getElementById('newPass').value;
+    const el = document.getElementById('passMsg');
+    try {
+      const res = await fetch('/change-password', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({current_password: cur, new_password: nw})
+      });
+      const d = await res.json();
+      if (d.success){ showMsg(el, 'Password updated.', true); document.getElementById('curPass').value=''; document.getElementById('newPass').value=''; }
+      else showMsg(el, d.message || 'Update failed.', false);
+    } catch(e){ showMsg(el, 'Could not reach server.', false); }
+  });
+
+  document.getElementById('addAdminBtn').addEventListener('click', async () => {
+    const u = document.getElementById('newAdminUser').value;
+    const p = document.getElementById('newAdminPass').value;
+    const el = document.getElementById('adminMsg');
+    try {
+      const res = await fetch('/create-admin', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({username: u, password: p})
+      });
+      const d = await res.json();
+      if (d.success){ showMsg(el, 'Admin account created.', true); document.getElementById('newAdminUser').value=''; document.getElementById('newAdminPass').value=''; }
+      else showMsg(el, d.message || 'Failed to create admin.', false);
+    } catch(e){ showMsg(el, 'Could not reach server.', false); }
+  });
+
+  loadMe();
+  loadStats();
+</script>
+</body>
+</html>

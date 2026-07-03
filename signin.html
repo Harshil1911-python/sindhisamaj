@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Sign In — Sindhi Samaj Surat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14161f; --indigo:#1b3a63; --maroon:#8b1e3f; --gold:#c9972b; --gold-soft:#e0b559;
+    --cream:#f6f0e4; --cream-soft:#fbf8f1; --line: rgba(201,151,43,0.35); --text-muted:#5a5648;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Mukta', sans-serif; color:var(--ink); min-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(160deg, var(--ink) 0%, var(--indigo) 100%);
+    padding:20px;
+  }
+  .panel{
+    width:100%; max-width:400px; background:var(--cream-soft); border-radius:4px;
+    border-top:4px solid var(--gold); padding:40px 34px; box-shadow:0 30px 70px rgba(0,0,0,0.35);
+  }
+  .brand{display:flex; align-items:center; gap:12px; margin-bottom:26px; justify-content:center;}
+  .brand-mark{
+    width:38px; height:38px; border-radius:50%;
+    background:conic-gradient(from 45deg, var(--gold), var(--maroon), var(--indigo), var(--gold));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Cormorant Garamond', serif; font-weight:700; color:var(--cream); font-size:1.05rem;
+  }
+  h1{font-family:'Cormorant Garamond',serif; text-align:center; font-size:1.6rem; color:var(--indigo); margin-bottom:6px;}
+  .sub{text-align:center; color:var(--text-muted); font-size:0.85rem; margin-bottom:28px;}
+  .field{margin-bottom:16px;}
+  label{display:block; font-size:0.85rem; font-weight:600; margin-bottom:6px;}
+  input{
+    width:100%; padding:12px 13px; font-family:'Mukta',sans-serif; font-size:0.95rem;
+    background:#fff; border:1px solid rgba(27,58,99,0.25); border-radius:2px; color:var(--ink);
+  }
+  input:focus{outline:none; border-color:var(--maroon); box-shadow:0 0 0 3px rgba(139,30,63,0.12);}
+  .btn{
+    width:100%; padding:13px; margin-top:8px; border-radius:3px; font-weight:700; font-size:0.95rem;
+    cursor:pointer; border:none; background:var(--gold); color:var(--ink); transition:.2s;
+  }
+  .btn:hover{background:var(--gold-soft);}
+  .btn:disabled{opacity:0.6; cursor:not-allowed;}
+  .status-msg{margin-top:16px; padding:11px 14px; border-radius:2px; font-size:0.86rem; display:none;}
+  .status-msg.show{display:block;}
+  .status-msg.err{background:rgba(139,30,63,0.1); color:var(--maroon); border:1px solid rgba(139,30,63,0.25);}
+  .back{display:block; text-align:center; margin-top:22px; font-size:0.85rem; color:var(--text-muted); text-decoration:none;}
+  .back:hover{color:var(--maroon);}
+  .hint{margin-top:20px; font-size:0.76rem; color:var(--text-muted); text-align:center; line-height:1.5;}
+</style>
+</head>
+<body>
+  <div class="panel">
+    <div class="brand"><div class="brand-mark">S</div></div>
+    <h1>Admin Sign In</h1>
+    <div class="sub">Sindhi Samaj Pariwar Surat — Marriage Bureau</div>
+    <form id="signinForm">
+      <div class="field">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn" id="submitBtn">Sign In</button>
+      <div class="status-msg" id="statusMsg"></div>
+    </form>
+    <a href="landing.html" class="back">&larr; Back to home</a>
+    <div class="hint">Default first-run login is <strong>admin / admin123</strong> — please change it immediately after signing in.</div>
+  </div>
+
+<script>
+  const form = document.getElementById('signinForm');
+  const statusMsg = document.getElementById('statusMsg');
+  const submitBtn = document.getElementById('submitBtn');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Signing in...';
+    statusMsg.className = 'status-msg';
+
+    try {
+      const res = await fetch('/signin', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          username: document.getElementById('username').value,
+          password: document.getElementById('password').value
+        })
+      });
+      const result = await res.json();
+      if (res.ok && result.success) {
+        window.location.href = result.redirect || 'admin.html';
+      } else {
+        statusMsg.textContent = result.message || 'Sign in failed.';
+        statusMsg.className = 'status-msg show err';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Sign In';
+      }
+    } catch (err) {
+      statusMsg.textContent = 'Could not reach the server. Please try again.';
+      statusMsg.className = 'status-msg show err';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Sign In';
+    }
+  });
+</script>
+</body>
+</html>

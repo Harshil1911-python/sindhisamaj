@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>View Profiles — Sindhi Samaj Surat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14161f; --indigo:#1b3a63; --maroon:#8b1e3f; --gold:#c9972b; --gold-soft:#e0b559;
+    --cream:#f6f0e4; --cream-soft:#fbf8f1; --line: rgba(201,151,43,0.35); --text-muted:#5a5648;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Mukta', sans-serif; color:var(--ink); background:var(--cream-soft);}
+  h1,h2,h3{font-family:'Cormorant Garamond', serif; font-weight:700;}
+  a{text-decoration:none; color:inherit;}
+
+  header{background:var(--ink); padding:12px 22px; position:sticky; top:0; z-index:80;}
+  .nav-wrap{max-width:1400px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;}
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand-mark{width:30px; height:30px; border-radius:50%; background:conic-gradient(from 45deg, var(--gold), var(--maroon), var(--indigo), var(--gold)); display:flex; align-items:center; justify-content:center; font-family:'Cormorant Garamond',serif; font-weight:700; color:var(--cream); font-size:0.85rem;}
+  .brand-text{color:var(--cream-soft); font-family:'Cormorant Garamond',serif; font-weight:700; font-size:1rem;}
+  .nav-right{display:flex; gap:14px; align-items:center;}
+  .nav-right a, .nav-right button{color:rgba(246,240,228,0.75); font-size:0.85rem; background:transparent; border:1px solid rgba(246,240,228,0.35); padding:7px 14px; border-radius:3px; cursor:pointer;}
+  .nav-right a:hover, .nav-right button:hover{color:var(--gold-soft); border-color:var(--gold-soft);}
+
+  .layout{display:flex; max-width:1400px; margin:0 auto; align-items:flex-start;}
+
+  /* FILTER DRAWER */
+  .filters{
+    width:300px; flex-shrink:0; background:var(--cream); border-right:1px solid var(--line);
+    min-height:calc(100vh - 55px); padding:20px 18px 60px; position:sticky; top:55px;
+    max-height:calc(100vh - 55px); overflow-y:auto; transition:width .28s ease, padding .28s ease;
+  }
+  .filters.collapsed{width:0; padding-left:0; padding-right:0; overflow:hidden; border-right:none;}
+  .filters-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .filters-head h2{font-size:1.15rem; color:var(--indigo);}
+  .filters-head button{background:transparent; border:none; color:var(--maroon); font-size:0.8rem; cursor:pointer; font-weight:600;}
+
+  .search-box{margin-bottom:16px;}
+  .search-box input{width:100%; padding:10px 12px; border:1px solid rgba(27,58,99,0.25); border-radius:2px; font-size:0.9rem;}
+
+  .fgroup{border-bottom:1px solid var(--line); margin-bottom:4px;}
+  .fgroup summary{
+    list-style:none; cursor:pointer; padding:12px 4px; font-weight:600; font-size:0.88rem; color:var(--indigo);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .fgroup summary::-webkit-details-marker{display:none;}
+  .fgroup summary::after{content:'+'; font-size:1.1rem; color:var(--gold); transition:transform .25s ease;}
+  .fgroup[open] summary::after{content:'−';}
+  .fgroup-body{
+    padding:0 4px 14px; display:flex; flex-direction:column; gap:8px;
+    animation: slideDown .22s ease;
+  }
+  @keyframes slideDown { from{opacity:0; transform:translateY(-6px);} to{opacity:1; transform:translateY(0);} }
+  .fgroup-body select, .fgroup-body input{
+    width:100%; padding:8px 10px; font-size:0.85rem; border:1px solid rgba(27,58,99,0.2); border-radius:2px; background:#fff;
+  }
+  .age-range{display:flex; gap:8px; align-items:center;}
+  .age-range input{width:70px;}
+
+  .filter-actions{margin-top:16px; display:flex; gap:10px;}
+  .btn-small{
+    flex:1; padding:10px; border-radius:3px; font-size:0.85rem; font-weight:600; cursor:pointer; border:none;
+  }
+  .btn-apply{background:var(--maroon); color:#fff;}
+  .btn-apply:hover{background:#a4254a;}
+  .btn-clear{background:transparent; border:1px solid var(--indigo); color:var(--indigo);}
+
+  .drawer-toggle{
+    position:sticky; top:65px; align-self:flex-start; margin:14px 0 0 -14px; z-index:70;
+    background:var(--gold); color:var(--ink); border:none; width:28px; height:56px; border-radius:0 6px 6px 0;
+    cursor:pointer; font-size:0.95rem; box-shadow:2px 2px 8px rgba(0,0,0,0.15);
+  }
+
+  /* RESULTS */
+  .results{flex:1; padding:20px 26px 60px; min-width:0;}
+  .results-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:10px;}
+  .results-head h1{font-size:1.5rem; color:var(--indigo);}
+  .count-pill{font-size:0.82rem; color:var(--text-muted); background:var(--cream); border:1px solid var(--line); padding:6px 14px; border-radius:20px;}
+
+  .card-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:22px;}
+  .p-card{
+    background:var(--cream); border:1px solid var(--line); border-radius:4px; overflow:hidden; cursor:pointer;
+    transition:transform .18s ease, box-shadow .18s ease; display:flex; flex-direction:column;
+  }
+  .p-card:hover{transform:translateY(-4px); box-shadow:0 14px 30px rgba(20,22,31,0.15);}
+  .p-photo{width:100%; aspect-ratio:3/4; background:linear-gradient(135deg,var(--indigo),var(--maroon)); position:relative; overflow:hidden;}
+  .p-photo img{width:100%; height:100%; object-fit:cover; display:block;}
+  .p-photo .noimg{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:rgba(246,240,228,0.5); font-family:'Cormorant Garamond',serif; font-size:2.6rem;}
+  .p-tag{position:absolute; top:10px; left:10px; background:rgba(20,22,31,0.65); color:var(--gold-soft); font-size:0.7rem; font-weight:700; padding:4px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.05em;}
+  .p-body{padding:14px 16px 16px;}
+  .p-body h3{font-size:1.1rem; color:var(--ink); margin-bottom:4px;}
+  .p-body .meta{font-size:0.82rem; color:var(--text-muted); display:flex; flex-direction:column; gap:2px;}
+  .p-body .meta span{display:flex; gap:6px;}
+
+  .empty{padding:60px 20px; text-align:center; color:var(--text-muted); grid-column:1/-1;}
+
+  /* MODAL */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(20,22,31,0.72); z-index:200; display:none;
+    align-items:flex-start; justify-content:center; padding:40px 16px; overflow-y:auto;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal{
+    background:var(--cream-soft); max-width:920px; width:100%; border-radius:6px; overflow:hidden;
+    border-top:5px solid var(--gold); animation: pop .2s ease;
+  }
+  @keyframes pop{ from{opacity:0; transform:scale(0.97);} to{opacity:1; transform:scale(1);} }
+  .modal-head{background:var(--ink); color:var(--cream-soft); padding:20px 26px; display:flex; align-items:center; justify-content:space-between;}
+  .modal-head h2{font-size:1.5rem;}
+  .modal-head .sub{font-size:0.82rem; color:rgba(246,240,228,0.65); margin-top:2px;}
+  .modal-close{background:transparent; border:none; color:var(--cream-soft); font-size:1.5rem; cursor:pointer; line-height:1;}
+  .modal-close:hover{color:var(--gold-soft);}
+
+  .modal-gallery{display:flex; gap:10px; padding:18px 26px 0; overflow-x:auto;}
+  .modal-gallery img{width:110px; height:140px; object-fit:cover; border-radius:3px; cursor:zoom-in; flex-shrink:0; border:1px solid var(--line);}
+
+  .modal-body{padding:20px 26px 30px;}
+  .msection{margin-bottom:20px;}
+  .msection h3{font-size:1.05rem; color:var(--maroon); border-bottom:1px solid var(--line); padding-bottom:6px; margin-bottom:12px;}
+  .mgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:10px 20px;}
+  .mfield{font-size:0.86rem;}
+  .mfield .l{color:var(--text-muted); font-size:0.74rem; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:2px;}
+  .mfield .v{color:var(--ink); font-weight:500;}
+
+  .modal-actions{display:flex; gap:12px; flex-wrap:wrap; padding:0 26px 26px;}
+  .btn{display:inline-flex; align-items:center; gap:8px; padding:11px 20px; border-radius:3px; font-weight:600; font-size:0.86rem; cursor:pointer; border:none; text-decoration:none;}
+  .btn-gold{background:var(--gold); color:var(--ink);}
+  .btn-gold:hover{background:var(--gold-soft);}
+  .btn-outline{background:transparent; border:1px solid var(--indigo); color:var(--indigo);}
+  .btn-outline:hover{background:rgba(27,58,99,0.08);}
+  .btn-danger{background:transparent; border:1px solid var(--maroon); color:var(--maroon);}
+  .btn-danger:hover{background:rgba(139,30,63,0.08);}
+
+  .qr-box{display:flex; align-items:center; gap:18px; padding:20px 26px; border-top:1px solid var(--line); background:var(--cream);}
+  .qr-box img{width:110px; height:110px; border:1px solid var(--line); background:#fff; padding:6px; border-radius:3px;}
+  .qr-box .qtext h4{font-size:0.95rem; color:var(--indigo); margin-bottom:4px;}
+  .qr-box .qtext p{font-size:0.8rem; color:var(--text-muted); max-width:420px;}
+
+  /* Lightbox */
+  .lightbox{position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:300; display:none; align-items:center; justify-content:center; padding:30px;}
+  .lightbox.show{display:flex;}
+  .lightbox img{max-width:92vw; max-height:92vh; border-radius:4px;}
+  .lightbox-close{position:absolute; top:24px; right:32px; color:#fff; font-size:2rem; cursor:pointer; background:none; border:none;}
+
+  @media (max-width:1100px){ .card-grid{grid-template-columns:repeat(2,1fr);} .mgrid{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:760px){
+    .layout{flex-direction:column;}
+    .filters{position:relative; top:0; width:100%; max-height:none;}
+    .filters.collapsed{width:100%; height:0; padding:0;}
+    .drawer-toggle{display:none;}
+    .card-grid{grid-template-columns:1fr;}
+    .mgrid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav-wrap">
+    <div class="brand"><div class="brand-mark">S</div><div class="brand-text">View Profiles — Walk-in Mode</div></div>
+    <div class="nav-right">
+      <a href="admin.html">&larr; Dashboard</a>
+      <button id="signOutBtn">Sign Out</button>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <button class="drawer-toggle" id="drawerToggle" title="Toggle filters">&#9776;</button>
+  <aside class="filters" id="filtersPanel">
+    <div class="filters-head">
+      <h2>Filters</h2>
+      <button id="clearFiltersBtn">Clear all</button>
+    </div>
+
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search name, phone, email, occupation...">
+    </div>
+
+    <details class="fgroup" open>
+      <summary>Basic</summary>
+      <div class="fgroup-body">
+        <select id="f_profile_for"><option value="">Registering for — Any</option><option value="Bride">Bride</option><option value="Groom">Groom</option></select>
+        <select id="f_gender"><option value="">Gender — Any</option><option value="Male">Male</option><option value="Female">Female</option></select>
+        <div class="age-range">
+          <input type="number" id="f_age_min" placeholder="Age min">
+          <span>–</span>
+          <input type="number" id="f_age_max" placeholder="Age max">
+        </div>
+        <select id="f_marital_status"><option value="">Marital Status — Any</option>
+          <option>Single</option><option>Widow</option><option>Widower</option><option>Divorced</option><option>Separated</option>
+        </select>
+        <select id="f_blood_group"><option value="">Blood Group — Any</option></select>
+        <select id="f_complexion"><option value="">Complexion — Any</option></select>
+        <select id="f_body_type"><option value="">Body Type — Any</option></select>
+      </div>
+    </details>
+
+    <details class="fgroup">
+      <summary>Location</summary>
+      <div class="fgroup-body">
+        <select id="f_current_city"><option value="">Current City — Any</option></select>
+        <select id="f_native_place"><option value="">Native Place — Any</option></select>
+      </div>
+    </details>
+
+    <details class="fgroup">
+      <summary>Community</summary>
+      <div class="fgroup-body">
+        <select id="f_sindhi_caste"><option value="">Sindhi Caste — Any</option></select>
+        <select id="f_sub_caste"><option value="">Sub Caste — Any</option></select>
+      </div>
+    </details>
+
+    <details class="fgroup">
+      <summary>Education &amp; Career</summary>
+      <div class="fgroup-body">
+        <select id="f_qualification"><option value="">Qualification — Any</option></select>
+        <select id="f_occupation"><option value="">Occupation — Any</option></select>
+      </div>
+    </details>
+
+    <details class="fgroup">
+      <summary>Lifestyle</summary>
+      <div class="fgroup-body">
+        <select id="f_food_preference"><option value="">Food Preference — Any</option></select>
+        <select id="f_smoking"><option value="">Smoking — Any</option><option>No</option><option>Yes</option><option>Occasionally</option></select>
+        <select id="f_drinking"><option value="">Drinking — Any</option><option>No</option><option>Yes</option><option>Occasionally</option></select>
+      </div>
+    </details>
+
+    <details class="fgroup">
+      <summary>Astrological</summary>
+      <div class="fgroup-body">
+        <select id="f_manglik"><option value="">Manglik — Any</option><option>Yes</option><option>No</option><option>Partial</option></select>
+      </div>
+    </details>
+
+    <details class="fgroup">
+      <summary>Status</summary>
+      <div class="fgroup-body">
+        <select id="f_status"><option value="">Status — Any</option><option>Active</option><option>Inactive</option><option>Matched</option><option>Hold</option></select>
+      </div>
+    </details>
+
+    <div class="filter-actions">
+      <button class="btn-small btn-apply" id="applyBtn">Apply Filters</button>
+      <button class="btn-small btn-clear" id="clearBtn">Clear</button>
+    </div>
+  </aside>
+
+  <section class="results">
+    <div class="results-head">
+      <h1>Profiles</h1>
+      <div class="count-pill" id="countPill">Loading…</div>
+    </div>
+    <div class="card-grid" id="cardGrid"></div>
+  </section>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2 id="mName">—</h2>
+        <div class="sub" id="mSub">—</div>
+      </div>
+      <button class="modal-close" id="modalCloseBtn">&times;</button>
+    </div>
+    <div class="modal-gallery" id="modalGallery"></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-actions">
+      <a class="btn btn-gold" id="btnPdf" target="_blank">Download Biodata (PDF)</a>
+      <a class="btn btn-outline" id="btnPng" target="_blank">Download Biodata (PNG)</a>
+      <button class="btn btn-danger" id="btnDelete">Delete Profile</button>
+    </div>
+    <div class="qr-box">
+      <img id="qrImg" src="" alt="QR Code">
+      <div class="qtext">
+        <h4>Scan for user view</h4>
+        <p>This QR opens a read-only version of this profile — no admin functions, no verification documents. Safe to show or print for walk-in visitors.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lightboxClose">&times;</button>
+  <img id="lightboxImg" src="">
+</div>
+
+<script>
+  const FIELD_LABELS = {
+    father_name:"Father's Name", mother_name:"Mother's Name", guardian_name:"Guardian's Name",
+    dob:"Date of Birth", time_of_birth:"Time of Birth", place_of_birth:"Place of Birth",
+    age:"Age", height:"Height", weight:"Weight", blood_group:"Blood Group", complexion:"Complexion",
+    body_type:"Body Type", nationality:"Nationality", religion:"Religion", community:"Community",
+    sindhi_caste:"Sindhi Caste", sub_caste:"Sub Caste", mother_tongue:"Mother Tongue",
+    marital_status:"Marital Status", children:"Children",
+    occupation:"Occupation", career:"Career", company:"Company", business:"Business",
+    designation:"Designation", income_monthly:"Income (Monthly)", income_yearly:"Income (Yearly)",
+    qualification:"Qualification", college:"College", university:"University",
+    current_city:"Current City", native_place:"Native Place", phone:"Phone", alternate_phone:"Alternate Phone",
+    email:"Email", whatsapp:"WhatsApp", emergency_contact:"Emergency Contact",
+    permanent_address:"Permanent Address", temporary_address:"Temporary Address",
+    food_preference:"Food Preference", smoking:"Smoking", drinking:"Drinking", habits:"Habits",
+    hobbies:"Hobbies", interests:"Interests", languages_known:"Languages Known", about_yourself:"About",
+    expected_age:"Expected Age", expected_height:"Expected Height", expected_education:"Expected Education",
+    expected_profession:"Expected Profession", expected_income:"Expected Income",
+    expected_location:"Expected Location", expected_lifestyle:"Expected Lifestyle",
+    manglik:"Manglik", rashi:"Rashi", nakshatra:"Nakshatra", mulank:"Mulank",
+    kundli_available:"Kundli Available", birth_chart:"Birth Chart", horoscope_notes:"Horoscope Notes",
+    disability:"Disability", special_notes:"Special Notes",
+    aadhar_number:"Aadhar Number", passport_number:"Passport Number", status:"Status"
+  };
+
+  const SECTIONS = [
+    ["Basic Information", ["father_name","mother_name","guardian_name","dob","time_of_birth","place_of_birth","age","height","weight","blood_group","complexion","body_type","nationality","religion","community","sindhi_caste","sub_caste","mother_tongue"]],
+    ["Marital Status", ["marital_status","children"]],
+    ["Occupation & Career", ["occupation","career","company","business","designation","income_monthly","income_yearly"]],
+    ["Education", ["qualification","college","university"]],
+    ["Address & Contact", ["current_city","native_place","phone","alternate_phone","email","whatsapp","emergency_contact","permanent_address","temporary_address"]],
+    ["Lifestyle", ["food_preference","smoking","drinking","habits","hobbies","interests","languages_known","about_yourself"]],
+    ["Partner Preference", ["expected_age","expected_height","expected_education","expected_profession","expected_income","expected_location","expected_lifestyle"]],
+    ["Astrological Details", ["manglik","rashi","nakshatra","mulank","kundli_available","birth_chart","horoscope_notes"]],
+    ["Medical Information", ["disability","special_notes"]],
+    ["Verification (Admin Only)", ["aadhar_number","passport_number","status"]],
+  ];
+
+  let currentProfileId = null;
+
+  async function checkAuth(){
+    const res = await fetch('/api/me');
+    const d = await res.json();
+    if (!d.authenticated) window.location.href = 'signin.html';
+  }
+
+  document.getElementById('signOutBtn').addEventListener('click', async () => {
+    await fetch('/signout', {method:'POST'});
+    window.location.href = 'signin.html';
+  });
+
+  // Drawer toggle
+  const filtersPanel = document.getElementById('filtersPanel');
+  document.getElementById('drawerToggle').addEventListener('click', () => {
+    filtersPanel.classList.toggle('collapsed');
+  });
+
+  async function loadFilterOptions(){
+    const res = await fetch('/api/filter-options');
+    const d = await res.json();
+    if (!d.success) return;
+    const map = {
+      current_city:'f_current_city', native_place:'f_native_place', sindhi_caste:'f_sindhi_caste',
+      sub_caste:'f_sub_caste', qualification:'f_qualification', occupation:'f_occupation',
+      blood_group:'f_blood_group', complexion:'f_complexion', body_type:'f_body_type',
+      food_preference:'f_food_preference'
+    };
+    for (const [col, elId] of Object.entries(map)){
+      const sel = document.getElementById(elId);
+      (d.options[col]||[]).forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v; opt.textContent = v;
+        sel.appendChild(opt);
+      });
+    }
+  }
+
+  function buildQuery(){
+    const params = new URLSearchParams();
+    const search = document.getElementById('searchInput').value.trim();
+    if (search) params.set('search', search);
+    const fieldIds = ['profile_for','gender','marital_status','blood_group','complexion','body_type',
+      'current_city','native_place','sindhi_caste','sub_caste','qualification','occupation',
+      'food_preference','smoking','drinking','manglik','status'];
+    fieldIds.forEach(f => {
+      const v = document.getElementById('f_'+f).value;
+      if (v) params.set(f, v);
+    });
+    const amin = document.getElementById('f_age_min').value;
+    const amax = document.getElementById('f_age_max').value;
+    if (amin) params.set('age_min', amin);
+    if (amax) params.set('age_max', amax);
+    return params.toString();
+  }
+
+  async function loadProfiles(){
+    const grid = document.getElementById('cardGrid');
+    grid.innerHTML = '<div class="empty">Loading profiles…</div>';
+    const qs = buildQuery();
+    const res = await fetch('/api/profiles' + (qs ? '?' + qs : ''));
+    const d = await res.json();
+    document.getElementById('countPill').textContent = d.count + ' profile' + (d.count === 1 ? '' : 's');
+    if (!d.success || d.count === 0){
+      grid.innerHTML = '<div class="empty">No profiles match these filters.</div>';
+      return;
+    }
+    grid.innerHTML = '';
+    d.profiles.forEach(p => grid.appendChild(renderCard(p)));
+  }
+
+  function renderCard(p){
+    const el = document.createElement('div');
+    el.className = 'p-card';
+    el.addEventListener('click', () => openModal(p.id));
+    const photoHtml = p.primary_photo
+      ? `<img src="${p.primary_photo}" alt="${p.full_name||''}">`
+      : `<div class="noimg">${(p.full_name||'?').charAt(0).toUpperCase()}</div>`;
+    el.innerHTML = `
+      <div class="p-photo">
+        <span class="p-tag">${p.profile_for || '—'}</span>
+        ${photoHtml}
+      </div>
+      <div class="p-body">
+        <h3>${p.full_name || 'Unnamed'}</h3>
+        <div class="meta">
+          <span>&#127874; ${p.age || '—'} yrs · ${p.marital_status || '—'}</span>
+          <span>&#128188; ${p.occupation || '—'}</span>
+          <span>&#128205; ${p.current_city || '—'}</span>
+        </div>
+      </div>`;
+    return el;
+  }
+
+  async function openModal(id){
+    currentProfileId = id;
+    const res = await fetch('/api/profile/' + id);
+    const d = await res.json();
+    if (!d.success) return;
+    const p = d.profile;
+
+    document.getElementById('mName').textContent = p.full_name || 'Unnamed Profile';
+    document.getElementById('mSub').textContent = `${p.profile_for || '—'} · ${p.gender || '—'} · ${p.age || '—'} yrs`;
+
+    const gallery = document.getElementById('modalGallery');
+    gallery.innerHTML = '';
+    (p.photos || []).forEach(src => {
+      const img = document.createElement('img');
+      img.src = src;
+      img.addEventListener('click', (e) => { e.stopPropagation(); openLightbox(src); });
+      gallery.appendChild(img);
+    });
+    if (!p.photos || p.photos.length === 0){
+      gallery.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem; padding:6px 0;">No photos uploaded.</div>';
+    }
+
+    const body = document.getElementById('modalBody');
+    body.innerHTML = '';
+    SECTIONS.forEach(([title, fields]) => {
+      const sec = document.createElement('div');
+      sec.className = 'msection';
+      const grid = fields.map(f => {
+        const label = FIELD_LABELS[f] || f;
+        const val = (p[f] === null || p[f] === undefined || p[f] === '') ? '—' : p[f];
+        return `<div class="mfield"><div class="l">${label}</div><div class="v">${val}</div></div>`;
+      }).join('');
+      sec.innerHTML = `<h3>${title}</h3><div class="mgrid">${grid}</div>`;
+      body.appendChild(sec);
+    });
+
+    document.getElementById('btnPdf').href = `/biodata/${id}/pdf`;
+    document.getElementById('btnPng').href = `/biodata/${id}/png`;
+    document.getElementById('qrImg').src = `/api/profile/${id}/qr.png`;
+
+    document.getElementById('modalOverlay').classList.add('show');
+  }
+
+  document.getElementById('modalCloseBtn').addEventListener('click', () => {
+    document.getElementById('modalOverlay').classList.remove('show');
+  });
+  document.getElementById('modalOverlay').addEventListener('click', (e) => {
+    if (e.target.id === 'modalOverlay') document.getElementById('modalOverlay').classList.remove('show');
+  });
+
+  document.getElementById('btnDelete').addEventListener('click', async () => {
+    if (!currentProfileId) return;
+    if (!confirm('Permanently delete this profile? This cannot be undone.')) return;
+    const res = await fetch('/api/profile/' + currentProfileId, {method:'DELETE'});
+    const d = await res.json();
+    if (d.success){
+      document.getElementById('modalOverlay').classList.remove('show');
+      loadProfiles();
+    }
+  });
+
+  function openLightbox(src){
+    document.getElementById('lightboxImg').src = src;
+    document.getElementById('lightbox').classList.add('show');
+  }
+  document.getElementById('lightboxClose').addEventListener('click', () => {
+    document.getElementById('lightbox').classList.remove('show');
+  });
+  document.getElementById('lightbox').addEventListener('click', (e) => {
+    if (e.target.id === 'lightbox') document.getElementById('lightbox').classList.remove('show');
+  });
+
+  document.getElementById('applyBtn').addEventListener('click', loadProfiles);
+  document.getElementById('searchInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') loadProfiles(); });
+
+  function clearFilters(){
+    document.querySelectorAll('.filters select').forEach(s => s.value = '');
+    document.querySelectorAll('.filters input').forEach(i => i.value = '');
+    loadProfiles();
+  }
+  document.getElementById('clearBtn').addEventListener('click', clearFilters);
+  document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
+
+  checkAuth();
+  loadFilterOptions();
+  loadProfiles();
+</script>
+</body>
+</html>

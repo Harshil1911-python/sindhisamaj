@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register — Sindhi Samaj Surat Marriage Bureau</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14161f;
+    --indigo:#1b3a63;
+    --maroon:#8b1e3f;
+    --gold:#c9972b;
+    --gold-soft:#e0b559;
+    --cream:#f6f0e4;
+    --cream-soft:#fbf8f1;
+    --line: rgba(201,151,43,0.35);
+    --text-muted:#5a5648;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Mukta', sans-serif;
+    background:var(--cream-soft);
+    color:var(--ink);
+    line-height:1.55;
+    min-height:100vh;
+  }
+  h1,h2,.display{font-family:'Cormorant Garamond', serif; font-weight:600;}
+  a{text-decoration:none; color:inherit;}
+
+  .ajrak-strip{
+    height:10px; width:100%;
+    background-image:
+      linear-gradient(135deg, var(--gold) 25%, transparent 25%),
+      linear-gradient(225deg, var(--gold) 25%, transparent 25%),
+      linear-gradient(45deg, var(--gold) 25%, transparent 25%),
+      linear-gradient(315deg, var(--gold) 25%, var(--indigo) 25%);
+    background-position: 9px 0, 9px 0, 0 0, 0 0;
+    background-size: 18px 18px;
+    background-repeat: repeat-x;
+    background-color: var(--maroon);
+  }
+
+  header{background:var(--ink); padding:16px 24px; position:sticky; top:0; z-index:60;}
+  .nav-wrap{max-width:1040px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;}
+  .brand{display:flex; align-items:center; gap:12px;}
+  .brand-mark{
+    width:34px; height:34px; border-radius:50%;
+    background:conic-gradient(from 45deg, var(--gold), var(--maroon), var(--indigo), var(--gold));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Cormorant Garamond', serif; font-weight:700; color:var(--cream); font-size:0.95rem;
+  }
+  .brand-text{color:var(--cream-soft); font-family:'Cormorant Garamond', serif; font-weight:700; font-size:1.1rem;}
+  .back-link{color:rgba(246,240,228,0.75); font-size:0.88rem;}
+  .back-link:hover{color:var(--gold-soft);}
+
+  /* section quick-nav */
+  .section-nav{
+    background:var(--cream); border-bottom:1px solid var(--line);
+    position:sticky; top:66px; z-index:55; overflow-x:auto; white-space:nowrap;
+  }
+  .section-nav-inner{max-width:1040px; margin:0 auto; padding:10px 24px; display:flex; gap:6px;}
+  .section-nav a{
+    font-size:0.78rem; font-weight:600; color:var(--text-muted); padding:6px 12px;
+    border-radius:14px; border:1px solid transparent; flex:0 0 auto;
+  }
+  .section-nav a:hover{color:var(--maroon); border-color:var(--line);}
+
+  main{max-width:1040px; margin:0 auto; padding:44px 24px 90px;}
+  .page-head{margin-bottom:34px;}
+  .eyebrow{
+    color:var(--maroon); text-transform:uppercase; letter-spacing:0.2em;
+    font-size:0.76rem; font-weight:600; margin-bottom:14px; display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{content:''; width:30px; height:1px; background:var(--maroon);}
+  .page-head h1{font-size:clamp(1.9rem, 4vw, 2.6rem); margin-bottom:10px;}
+  .page-head p{color:var(--text-muted); max-width:600px;}
+
+  form{background:var(--cream); border:1px solid var(--line); border-left:4px solid var(--maroon); padding:38px 34px; border-radius:2px;}
+
+  fieldset{border:none; margin-bottom:8px; padding-bottom:30px; border-bottom:1px solid var(--line); scroll-margin-top:130px;}
+  fieldset:last-of-type{border-bottom:none;}
+  fieldset legend{
+    font-family:'Cormorant Garamond', serif; font-size:1.35rem; font-weight:700;
+    color:var(--indigo); margin-bottom:4px; padding:0; width:100%;
+  }
+  fieldset .legend-note{display:block; font-family:'Mukta',sans-serif; font-size:0.82rem; font-weight:400; color:var(--text-muted); margin-bottom:18px; margin-top:4px;}
+
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px;}
+  .field{margin-bottom:16px;}
+  .field.full{grid-column:1 / -1;}
+  .field label{
+    display:block; font-size:0.86rem; font-weight:600; color:var(--ink); margin-bottom:6px;
+  }
+  .field .hint{font-size:0.78rem; color:var(--text-muted); font-weight:400; margin-left:6px;}
+  input, select, textarea{
+    width:100%; padding:11px 13px; font-family:'Mukta', sans-serif; font-size:0.95rem;
+    background:var(--cream-soft); border:1px solid rgba(27,58,99,0.25); border-radius:2px; color:var(--ink);
+  }
+  input[type="file"]{padding:9px 10px; background:#fff; cursor:pointer;}
+  input:focus, select:focus, textarea:focus{
+    outline:none; border-color:var(--maroon); box-shadow:0 0 0 3px rgba(139,30,63,0.12);
+  }
+  textarea{resize:vertical; min-height:80px;}
+  .file-note{font-size:0.76rem; color:var(--text-muted); margin-top:5px;}
+
+  .submit-row{display:flex; align-items:center; gap:18px; margin-top:14px; flex-wrap:wrap;}
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center;
+    padding:13px 30px; border-radius:3px; font-weight:600; font-size:0.95rem;
+    cursor:pointer; border:none; transition:transform .15s ease, box-shadow .15s ease, background .2s;
+  }
+  .btn-gold{background:var(--gold); color:var(--ink);}
+  .btn-gold:hover{background:var(--gold-soft); box-shadow:0 6px 16px rgba(201,151,43,0.35); transform:translateY(-1px);}
+  .btn:disabled{opacity:0.6; cursor:not-allowed; transform:none;}
+  .login-hint{font-size:0.88rem; color:var(--text-muted);}
+  .login-hint a{color:var(--maroon); font-weight:600;}
+
+  .status-msg{
+    margin-top:18px; padding:13px 16px; border-radius:2px; font-size:0.9rem; display:none;
+  }
+  .status-msg.show{display:block;}
+  .status-msg.ok{background:rgba(27,58,99,0.1); color:var(--indigo); border:1px solid rgba(27,58,99,0.25);}
+  .status-msg.err{background:rgba(139,30,63,0.1); color:var(--maroon); border:1px solid rgba(139,30,63,0.25);}
+
+  @media (max-width:760px){
+    .grid2, .grid3{grid-template-columns:1fr;}
+    form{padding:26px 20px;}
+    .section-nav{top:60px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav-wrap">
+    <div class="brand">
+      <div class="brand-mark">S</div>
+      <div class="brand-text">Sindhi Samaj Surat</div>
+    </div>
+    <a href="landing.html" class="back-link">&larr; Back to home</a>
+  </div>
+</header>
+<div class="ajrak-strip"></div>
+
+<nav class="section-nav">
+  <div class="section-nav-inner">
+    <a href="#sec-basic">Basic</a>
+    <a href="#sec-marital">Marital</a>
+    <a href="#sec-career">Career</a>
+    <a href="#sec-education">Education</a>
+    <a href="#sec-contact">Address &amp; Contact</a>
+    <a href="#sec-lifestyle">Lifestyle</a>
+    <a href="#sec-partner">Partner Preference</a>
+    <a href="#sec-astro">Astrological</a>
+    <a href="#sec-medical">Medical</a>
+    <a href="#sec-verify">Verification</a>
+    <a href="#sec-photos">Photos</a>
+    <a href="#sec-account">Account</a>
+  </div>
+</nav>
+
+<main>
+  <div class="page-head">
+    <div class="eyebrow">New profile</div>
+    <h1>Register your profile</h1>
+    <p>Fill in as much detail as you can — complete profiles are reviewed and matched faster by the Samaj bureau. Fields marked with an asterisk (*) are required.</p>
+  </div>
+
+  <form id="registerForm" autocomplete="off" enctype="multipart/form-data">
+
+    <fieldset id="sec-basic">
+      <legend>Basic Information</legend>
+      <span class="legend-note">Who this profile is for.</span>
+      <div class="grid3">
+        <div class="field"><label for="full_name">Full Name *</label><input type="text" id="full_name" name="full_name" required></div>
+        <div class="field"><label for="gender">Gender *</label>
+          <select id="gender" name="gender" required>
+            <option value="" disabled selected>Select</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+        <div class="field"><label for="profile_for">Registering for *</label>
+          <select id="profile_for" name="profile_for" required>
+            <option value="" disabled selected>Select</option>
+            <option value="Bride">Bride</option>
+            <option value="Groom">Groom</option>
+          </select>
+        </div>
+        <div class="field"><label for="father_name">Father's Name</label><input type="text" id="father_name" name="father_name"></div>
+        <div class="field"><label for="mother_name">Mother's Name</label><input type="text" id="mother_name" name="mother_name"></div>
+        <div class="field"><label for="guardian_name">Guardian's Name <span class="hint">if applicable</span></label><input type="text" id="guardian_name" name="guardian_name"></div>
+        <div class="field"><label for="dob">Date of Birth *</label><input type="date" id="dob" name="dob" required></div>
+        <div class="field"><label for="time_of_birth">Time of Birth</label><input type="time" id="time_of_birth" name="time_of_birth"></div>
+        <div class="field"><label for="place_of_birth">Place of Birth</label><input type="text" id="place_of_birth" name="place_of_birth"></div>
+        <div class="field"><label for="age">Age</label><input type="number" id="age" name="age" min="18" max="99"></div>
+        <div class="field"><label for="height">Height <span class="hint">e.g. 5'6"</span></label><input type="text" id="height" name="height" placeholder="5'6&quot;"></div>
+        <div class="field"><label for="weight">Weight <span class="hint">e.g. 60 kg</span></label><input type="text" id="weight" name="weight" placeholder="60 kg"></div>
+        <div class="field"><label for="blood_group">Blood Group</label>
+          <select id="blood_group" name="blood_group">
+            <option value="" selected>Select</option>
+            <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+            <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
+          </select>
+        </div>
+        <div class="field"><label for="complexion">Complexion</label>
+          <select id="complexion" name="complexion">
+            <option value="" selected>Select</option>
+            <option>Very Fair</option><option>Fair</option><option>Wheatish</option><option>Dark</option>
+          </select>
+        </div>
+        <div class="field"><label for="body_type">Body Type</label>
+          <select id="body_type" name="body_type">
+            <option value="" selected>Select</option>
+            <option>Slim</option><option>Athletic</option><option>Average</option><option>Heavy</option>
+          </select>
+        </div>
+        <div class="field"><label for="nationality">Nationality</label><input type="text" id="nationality" name="nationality" value="Indian"></div>
+        <div class="field"><label for="religion">Religion</label><input type="text" id="religion" name="religion" value="Hindu"></div>
+        <div class="field"><label for="community">Community</label><input type="text" id="community" name="community" value="Sindhi"></div>
+        <div class="field"><label for="sindhi_caste">Sindhi Caste</label><input type="text" id="sindhi_caste" name="sindhi_caste" placeholder="e.g. Amil, Bhaiband, Sahiti"></div>
+        <div class="field"><label for="sub_caste">Sub Caste</label><input type="text" id="sub_caste" name="sub_caste"></div>
+        <div class="field"><label for="mother_tongue">Mother Tongue</label><input type="text" id="mother_tongue" name="mother_tongue" value="Sindhi"></div>
+      </div>
+    </fieldset>
+
+    <fieldset id="sec-marital">
+      <legend>Marital Status</legend>
+      <div class="grid3">
+        <div class="field"><label for="marital_status">Marital Status</label>
+          <select id="marital_status" name="marital_status">
+            <option value="Single" selected>Single</option>
+            <option value="Widow">Widow</option>
+            <option value="Widower">Widower</option>
+            <option value="Divorced">Divorced</option>
+            <option value="Separated">Separated</option>
+          </select>
+        </div>
+        <div class="field"><label for="children">Children <span class="hint">number, if any</span></label><input type="text" id="children" name="children" placeholder="e.g. None, or 1"></div>
+      </div>
+    </fieldset>
+
+    <fieldset id="sec-career">
+      <legend>Occupation &amp; Career</legend>
+      <div class="grid3">
+        <div class="field"><label for="occupation">Occupation</label><input type="text" id="occupation" name="occupation"></div>
+        <div class="field"><label for="career">Career</label><input type="text" id="career" name="career"></div>
+        <div class="field"><label for="company">Company</label><input type="text" id="company" name="company"></div>
+        <div class="field"><label for="business">Business <span class="hint">if self-employed</span></label><input type="text" id="business" name="business"></div>
+        <div class="field"><label for="designation">Designation</label><input type="text" id="designation" name="designation"></div>
+        <div class="field"><label for="income_monthly">Income (Monthly)</label><input type="text" id="income_monthly" name="income_monthly" placeholder="e.g. ₹60,000"></div>
+        <div class="field"><label for="income_yearly">Income (Yearly)</label><input type="text" id="income_yearly" name="income_yearly" placeholder="e.g. ₹7,20,000"></div>
+      </div>
+    </fieldset>
+
+    <fieldset id="sec-education">
+      <legend>Education</legend>
+      <div class="grid3">
+        <div class="field"><label for="qualification">Qualification</label><input type="text" id="qualification" name="qualification" placeholder="e.g. B.Com, MBA"></div>
+        <div class="field"><label for="college">College</label><input type="text" id="college" name="college"></div>
+        <div class="field"><label for="university">University</label><input type="text" id="university" name="university"></div>
+      </div>
+    </fieldset>
+
+    <fieldset id="sec-contact">
+      <legend>Address &amp; Contact</legend>
+      <div class="grid3">
+        <div class="field"><label for="current_city">Current City *</label><input type="text" id="current_city" name="current_city" value="Surat" required></div>
+        <div class="field"><label for="native_place">Native Place</label><input type="text" id="native_place" name="native_place"></div>
+        <div class="field"><label for="phone">Phone *</label><input type="tel" id="phone" name="phone" required></div>
+        <div class="field"><label for="alternate_phone">Alternate Phone</label><input type="tel" id="alternate_phone" name="alternate_phone"></div>
+        <div class="field"><label for="email">Email *</label><input type="email" id="email" name="email" required></div>
+        <div class="field"><label for="whatsapp">WhatsApp Number</label><input type="tel" id="whatsapp" name="whatsapp"></div>
+        <div class="field"><label for="emergency_contact">Emergency Contact</label><input type="tel" id="emergency_contact" name="emergency_contact"></div>
+        <div class="field full"><label for="permanent_address">Permanent Address</label><textarea id="permanent_address" name="permanent_address"></textarea></div>
+        <div class="field full"><label for="temporary_address">Temporary Address</label><textarea id="temporary_address" name="temporary_address"></textarea></div>
+      </div>
+    </fieldset>
+
+    <fieldset id="sec-lifestyle">
+      <legend>Lifestyle</legend>
+      <div class="grid3">
+        <div class="field"><label for="food_preference">Food Preference</label>
+          <select id="food_preference" name="food_preference">
+            <option value="" selected>Select</option>
+            <option value="Veg">Veg</option>
+            <option value="Non Veg">Non Veg</option>
+            <option value="Jain">Jain</option>
+          </select>
+        </div>
+        <div class="field"><label for="smoking">Smoking</label>
+          <select id="smoking" name="smoking">
+            <option value="No" selected>No</option>
+            <option value="Yes">Yes</option>
+            <option value="Occasionally">Occasionally</option>
+          </select>
+        </div>
+        <div class="field"><label for="drinking">Drinking</label>
+          <select id="drinking" name="drinking">
+            <option value="No" selected>No</option>
+            <option value="Yes">Yes</option>
+            <option value="Occasionally">Occasionally</option>
+          </select>
+        </div>
+        <div class="field"><label for="habits">Habits</label><input type="text" id="habits" name="habits"></div>
+        <div class="field"><label for="hobbies">Hobbies</label><input type="text" id="hobbies" name="hobbies"></div>
+        <div class="field"><label for="interests">Interests</label><input type="text" id="interests" name="interests"></div>
+        <div class="field full"><label for="languages_known">Languages Known</label><input type="text" id="languages_known" name="languages_known" placeholder="e.g. Sindhi, Hindi, English, Gujarati"></div>
+        <div class="field full"><label for="about_yourself">About Yourself</label><textarea id="about_yourself" name="about_yourself" placeholder="A short note about yourself, your family and values."></textarea></div>
+      </div>
+    </fieldset>
+
+    <fieldset id="sec-partner">
+      <legend>Partner Preference</legend>
+      <div class="grid3">
+        <div class="field"><label for="expected_age">Expected Age</label><input type="text" id="expected_age" name="expected_age" placeholder="e.g. 26-30"></div>
+        <div class="field"><label for="expected_height">Expected Height</label><input type="text" id="expected_height" name="expected_height" placeholder="e.g. 5'2&quot; - 5'6&quot;"></div>
+        <div class="field"><label for="expected_education">Expected Education</label><input type="text" id="expected_education" name="expected_education"></div>
+        <div class="field"><label for="expected_profession">Expected Profession</label><input type="text" id="expected_profession" name="expected_profession"></div>
+        <div class="field"><label for="expected_income">Expected Income</label><input type="text" id="expected_income" name="expected_income"></div>
+        <div class="field"><label for="expected_location">Expected Location</label><input type="text" id="expected_location" name="expected_location"></div>
+        <div class="field full"><label for="expected_lifestyle">Expected Lifestyle</label><textarea id="expected_lifestyle" name="expected_lifestyle" placeholder="Any preferences on food habits, smoking/drinking, family type, etc."></textarea></div>
+      </div>
+    </fieldset>
+
+    <fieldset id="sec-astro">
+      <legend>Astrological Details</legend>
+      <div class="grid3">
+        <div class="field"><label for="manglik">Manglik</label>
+          <select id="manglik" name="manglik">
+            <option value="" selected>Select</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+            <option value="Partial">Partial</option>
+          </select>
+        </div>
+        <div class="field"><label for="rashi">Rashi</label><input type="text" id="rashi" name="rashi"></div>
+        <div class="field"><label for="nakshatra">Nakshatra</label><input type="text" id="nakshatra" name="nakshatra"></div>
+        <div class="field"><label for="mulank">Mulank</label><input type="text" id="mulank" name="mulank"></div>
+        <div class="field"><label for="kundli_available">Kundli Available</label>
+          <select id="kundli_available" name="kundli_available">
+            <option value="No" selected>No</option>
+            <option value="Yes">Yes</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="kundli_pdf">Kundli PDF Upload</label>
+          <input type="file" id="kundli_pdf" name="kundli_pdf" accept="application/pdf">
+          <div class="file-note">PDF only, max 10 MB.</div>
+        </div>
+        <div class="field full"><label for="birth_chart">Birth Chart Details</label><textarea id="birth_chart" name="birth_chart" placeholder="Any birth chart / planetary position notes."></textarea></div>
+        <div class="field full"><label for="horoscope_notes">Horoscope Notes</label><textarea id="horoscope_notes" name="horoscope_notes"></textarea></div>
+      </div>
+    </fieldset>
+
+    <fieldset id="sec-medical">
+      <legend>Medical Information</legend>
+      <div class="grid2">
+        <div class="field"><label for="disability">Disability <span class="hint">if any, else "None"</span></label><input type="text" id="disability" name="disability" placeholder="None"></div>
+        <div class="field full"><label for="special_notes">Special Notes</label><textarea id="special_notes" name="special_notes" placeholder="Any medical condition the other family should be aware of."></textarea></div>
+      </div>
+    </fieldset>
+
+    <fieldset id="sec-verify">
+      <legend>Verification Documents</legend>
+      <span class="legend-note">Uploaded as photos (JPG/PNG) or a scanned image. Used only for identity verification by the Samaj bureau and never shown on the public profile.</span>
+      <div class="grid2">
+        <div class="field"><label for="aadhar_number">Aadhar Number</label><input type="text" id="aadhar_number" name="aadhar_number" placeholder="XXXX XXXX XXXX"></div>
+        <div class="field">
+          <label for="aadhar_photo">Aadhar Photo</label>
+          <input type="file" id="aadhar_photo" name="aadhar_photo" accept="image/*">
+          <div class="file-note">JPG or PNG, max 10 MB.</div>
+        </div>
+        <div class="field"><label for="passport_number">Passport Number</label><input type="text" id="passport_number" name="passport_number" placeholder="Optional"></div>
+        <div class="field">
+          <label for="passport_photo">Passport Photo</label>
+          <input type="file" id="passport_photo" name="passport_photo" accept="image/*">
+          <div class="file-note">JPG or PNG, max 10 MB.</div>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset id="sec-photos">
+      <legend>Photos</legend>
+      <span class="legend-note">Upload one or more clear, recent photographs. The first photo will be used as your main display photo.</span>
+      <div class="grid2">
+        <div class="field full">
+          <label for="photos">Profile Photos</label>
+          <input type="file" id="photos" name="photos" accept="image/*" multiple>
+          <div class="file-note">JPG, PNG or WEBP. You can select multiple files at once. Max 10 MB each.</div>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset id="sec-account">
+      <legend>Account</legend>
+      <span class="legend-note">Optional — set a password if you'd like to be able to update your profile later via the Samaj office.</span>
+      <div class="grid3">
+        <div class="field"><label for="password">Create Password <span class="hint">optional</span></label><input type="password" id="password" name="password" minlength="6"></div>
+      </div>
+    </fieldset>
+
+    <div class="submit-row">
+      <button type="submit" class="btn btn-gold" id="submitBtn">Submit profile</button>
+      <span class="login-hint">Registration is reviewed by the Samaj bureau — no login is required for members.</span>
+    </div>
+
+    <div class="status-msg" id="statusMsg"></div>
+  </form>
+</main>
+
+<script>
+  const form = document.getElementById('registerForm');
+  const statusMsg = document.getElementById('statusMsg');
+  const submitBtn = document.getElementById('submitBtn');
+  const dobInput = document.getElementById('dob');
+  const ageInput = document.getElementById('age');
+
+  dobInput.addEventListener('change', () => {
+    if (!dobInput.value) return;
+    const dob = new Date(dobInput.value);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+    if (age > 0 && age < 120) ageInput.value = age;
+  });
+
+  function showStatus(text, ok){
+    statusMsg.textContent = text;
+    statusMsg.className = 'status-msg show ' + (ok ? 'ok' : 'err');
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+
+    const formData = new FormData(form);
+
+    try {
+      const res = await fetch('/register', {
+        method: 'POST',
+        body: formData
+      });
+      const result = await res.json();
+
+      if (res.ok && result.success) {
+        showStatus('Profile submitted successfully. Thank you! The Samaj bureau will review your profile. Redirecting to home...', true);
+        form.reset();
+        setTimeout(() => { window.location.href = 'landing.html'; }, 2200);
+      } else {
+        showStatus(result.message || 'Something went wrong. Please try again.', false);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit profile';
+      }
+    } catch (err) {
+      showStatus('Could not reach the server. Please try again.', false);
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit profile';
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile Details — Sindhi Samaj Surat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14161f; --indigo:#1b3a63; --maroon:#8b1e3f; --gold:#c9972b; --gold-soft:#e0b559;
+    --cream:#f6f0e4; --cream-soft:#fbf8f1; --line: rgba(201,151,43,0.35); --text-muted:#5a5648;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Mukta', sans-serif; color:var(--ink); background:var(--cream-soft);}
+  h1,h2,h3{font-family:'Cormorant Garamond', serif; font-weight:700;}
+  a{text-decoration:none; color:inherit;}
+
+  header{background:var(--ink); padding:14px 22px;}
+  .nav-wrap{max-width:900px; margin:0 auto; display:flex; align-items:center; gap:10px;}
+  .brand-mark{width:30px; height:30px; border-radius:50%; background:conic-gradient(from 45deg, var(--gold), var(--maroon), var(--indigo), var(--gold)); display:flex; align-items:center; justify-content:center; font-family:'Cormorant Garamond',serif; font-weight:700; color:var(--cream); font-size:0.85rem;}
+  .brand-text{color:var(--cream-soft); font-family:'Cormorant Garamond',serif; font-weight:700; font-size:1rem;}
+
+  .ajrak-strip{
+    height:8px; width:100%;
+    background-image:
+      linear-gradient(135deg, var(--gold) 25%, transparent 25%),
+      linear-gradient(225deg, var(--gold) 25%, transparent 25%),
+      linear-gradient(45deg, var(--gold) 25%, transparent 25%),
+      linear-gradient(315deg, var(--gold) 25%, var(--indigo) 25%);
+    background-position: 9px 0, 9px 0, 0 0, 0 0;
+    background-size: 18px 18px; background-repeat: repeat-x; background-color: var(--maroon);
+  }
+
+  main{max-width:900px; margin:0 auto; padding:34px 22px 70px;}
+  #loadingMsg{text-align:center; padding:60px 20px; color:var(--text-muted);}
+
+  .profile-head{display:flex; gap:24px; align-items:flex-start; margin-bottom:26px; flex-wrap:wrap;}
+  .main-photo{width:180px; height:220px; object-fit:cover; border-radius:4px; border:1px solid var(--line); background:linear-gradient(135deg,var(--indigo),var(--maroon)); flex-shrink:0;}
+  .profile-head h1{font-size:2rem; color:var(--indigo); margin-bottom:6px;}
+  .profile-head .sub{color:var(--text-muted); font-size:0.95rem; margin-bottom:14px;}
+  .tag{display:inline-block; background:var(--maroon); color:#fff; font-size:0.72rem; font-weight:700; padding:4px 12px; border-radius:20px; text-transform:uppercase; letter-spacing:0.05em; margin-right:6px;}
+
+  .gallery{display:flex; gap:10px; overflow-x:auto; margin-bottom:30px;}
+  .gallery img{width:110px; height:140px; object-fit:cover; border-radius:3px; cursor:zoom-in; flex-shrink:0; border:1px solid var(--line);}
+
+  .msection{background:var(--cream); border:1px solid var(--line); border-left:4px solid var(--gold); padding:22px 24px; border-radius:2px; margin-bottom:18px;}
+  .msection h3{font-size:1.1rem; color:var(--maroon); margin-bottom:14px;}
+  .mgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px 20px;}
+  .mfield .l{color:var(--text-muted); font-size:0.74rem; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:2px;}
+  .mfield .v{color:var(--ink); font-weight:500; font-size:0.92rem;}
+
+  .notice{background:rgba(27,58,99,0.08); border:1px solid rgba(27,58,99,0.2); color:var(--indigo); padding:14px 18px; border-radius:2px; font-size:0.85rem; margin-bottom:24px;}
+
+  .lightbox{position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:300; display:none; align-items:center; justify-content:center; padding:30px;}
+  .lightbox.show{display:flex;}
+  .lightbox img{max-width:92vw; max-height:92vh; border-radius:4px;}
+  .lightbox-close{position:absolute; top:24px; right:32px; color:#fff; font-size:2rem; cursor:pointer; background:none; border:none;}
+
+  @media (max-width:700px){ .mgrid{grid-template-columns:1fr 1fr;} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav-wrap">
+    <div class="brand-mark">S</div>
+    <div class="brand-text">Sindhi Samaj Pariwar Surat — Marriage Bureau</div>
+  </div>
+</header>
+<div class="ajrak-strip"></div>
+
+<main>
+  <div id="loadingMsg">Loading profile…</div>
+  <div id="content" style="display:none;">
+    <div class="notice">You're viewing a read-only profile shared by the Samaj bureau. No admin actions or documents are available on this page.</div>
+    <div class="profile-head">
+      <img class="main-photo" id="mainPhoto" src="" alt="">
+      <div>
+        <span class="tag" id="tagFor"></span>
+        <h1 id="pName">—</h1>
+        <div class="sub" id="pSub">—</div>
+      </div>
+    </div>
+    <div class="gallery" id="gallery"></div>
+    <div id="sections"></div>
+  </div>
+  <div id="errorMsg" style="display:none; text-align:center; padding:60px 20px; color:var(--maroon);">Profile not found or link is invalid.</div>
+</main>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" id="lightboxClose">&times;</button>
+  <img id="lightboxImg" src="">
+</div>
+
+<script>
+  const FIELD_LABELS = {
+    father_name:"Father's Name", mother_name:"Mother's Name", guardian_name:"Guardian's Name",
+    dob:"Date of Birth", place_of_birth:"Place of Birth",
+    age:"Age", height:"Height", complexion:"Complexion",
+    body_type:"Body Type", religion:"Religion", community:"Community",
+    sindhi_caste:"Sindhi Caste", sub_caste:"Sub Caste", mother_tongue:"Mother Tongue",
+    marital_status:"Marital Status", children:"Children",
+    occupation:"Occupation", company:"Company", designation:"Designation", income_yearly:"Annual Income",
+    qualification:"Qualification", college:"College", university:"University",
+    current_city:"Current City", native_place:"Native Place",
+    food_preference:"Food Preference", smoking:"Smoking", drinking:"Drinking",
+    hobbies:"Hobbies", interests:"Interests", languages_known:"Languages Known", about_yourself:"About",
+    expected_age:"Expected Age", expected_height:"Expected Height", expected_education:"Expected Education",
+    expected_profession:"Expected Profession", expected_location:"Expected Location",
+    manglik:"Manglik", rashi:"Rashi", nakshatra:"Nakshatra",
+  };
+  const SECTIONS = [
+    ["Basic Information", ["father_name","mother_name","guardian_name","dob","place_of_birth","age","height","complexion","body_type","religion","community","sindhi_caste","sub_caste","mother_tongue"]],
+    ["Marital Status", ["marital_status","children"]],
+    ["Education & Career", ["qualification","college","university","occupation","company","designation","income_yearly"]],
+    ["Location", ["current_city","native_place"]],
+    ["Lifestyle", ["food_preference","smoking","drinking","hobbies","interests","languages_known","about_yourself"]],
+    ["Partner Preference", ["expected_age","expected_height","expected_education","expected_profession","expected_location"]],
+    ["Astrological Details", ["manglik","rashi","nakshatra"]],
+  ];
+
+  async function load(){
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const id = params.get('id');
+    let url = '/api/public/profile?';
+    url += token ? ('token=' + encodeURIComponent(token)) : ('id=' + encodeURIComponent(id||''));
+
+    try {
+      const res = await fetch(url);
+      const d = await res.json();
+      if (!res.ok || !d.success){ showError(); return; }
+      render(d.profile);
+    } catch(e){ showError(); }
+  }
+
+  function showError(){
+    document.getElementById('loadingMsg').style.display = 'none';
+    document.getElementById('errorMsg').style.display = 'block';
+  }
+
+  function render(p){
+    document.getElementById('loadingMsg').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+    document.getElementById('pName').textContent = p.full_name || 'Unnamed Profile';
+    document.getElementById('pSub').textContent = `${p.gender || '—'} · ${p.age || '—'} yrs · ${p.current_city || '—'}`;
+    document.getElementById('tagFor').textContent = p.profile_for || '—';
+    document.getElementById('mainPhoto').src = p.primary_photo || '';
+
+    const gallery = document.getElementById('gallery');
+    (p.photos || []).forEach(src => {
+      const img = document.createElement('img');
+      img.src = src;
+      img.addEventListener('click', () => openLightbox(src));
+      gallery.appendChild(img);
+    });
+
+    const sections = document.getElementById('sections');
+    SECTIONS.forEach(([title, fields]) => {
+      const sec = document.createElement('div');
+      sec.className = 'msection';
+      const grid = fields.map(f => {
+        const label = FIELD_LABELS[f] || f;
+        const val = (p[f] === null || p[f] === undefined || p[f] === '') ? '—' : p[f];
+        return `<div class="mfield"><div class="l">${label}</div><div class="v">${val}</div></div>`;
+      }).join('');
+      sec.innerHTML = `<h3>${title}</h3><div class="mgrid">${grid}</div>`;
+      sections.appendChild(sec);
+    });
+  }
+
+  function openLightbox(src){
+    document.getElementById('lightboxImg').src = src;
+    document.getElementById('lightbox').classList.add('show');
+  }
+  document.getElementById('lightboxClose').addEventListener('click', () => {
+    document.getElementById('lightbox').classList.remove('show');
+  });
+  document.getElementById('lightbox').addEventListener('click', (e) => {
+    if (e.target.id === 'lightbox') document.getElementById('lightbox').classList.remove('show');
+  });
+
+  load();
+</script>
+</body>
+</html>
