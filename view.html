@@ -124,6 +124,27 @@
   .mfield{font-size:0.86rem;}
   .mfield .l{color:var(--text-muted); font-size:0.74rem; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:2px;}
   .mfield .v{color:var(--ink); font-weight:500;}
+  .mfield input, .mfield select, .mfield textarea{
+    width:100%; padding:7px 9px; font-size:0.85rem; font-family:'Mukta',sans-serif;
+    border:1px solid rgba(27,58,99,0.25); border-radius:2px; background:#fff; color:var(--ink);
+  }
+  .mfield textarea{min-height:50px; resize:vertical;}
+  .verify-photos{display:flex; gap:14px; margin-top:8px;}
+  .verify-photos .vphoto{text-align:center;}
+  .verify-photos img{width:110px; height:80px; object-fit:cover; border-radius:3px; border:1px solid var(--line); cursor:zoom-in;}
+  .verify-photos .vphoto span{display:block; font-size:0.72rem; color:var(--text-muted); margin-top:4px;}
+  .edit-photo-row{margin-bottom:20px; padding:14px; background:var(--cream); border:1px solid var(--line); border-radius:3px;}
+  .edit-photo-row > label{font-size:0.85rem; font-weight:600; display:block; margin-bottom:10px;}
+  .edit-photo-grid{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
+  .edit-photo-item{position:relative; width:90px;}
+  .edit-photo-item img{width:90px; height:110px; object-fit:cover; border-radius:3px; border:2px solid var(--line); display:block;}
+  .edit-photo-item.is-primary img{border-color:var(--gold);}
+  .edit-photo-item .ep-badge{position:absolute; top:4px; left:4px; background:var(--gold); color:var(--ink); font-size:0.62rem; font-weight:700; padding:2px 6px; border-radius:10px;}
+  .edit-photo-item .ep-actions{display:flex; gap:4px; margin-top:4px;}
+  .edit-photo-item .ep-actions button{flex:1; font-size:0.68rem; padding:3px 4px; border-radius:2px; cursor:pointer; border:1px solid var(--line); background:#fff;}
+  .edit-photo-item .ep-actions button.ep-del{color:var(--maroon); border-color:var(--maroon);}
+  .edit-photo-item .ep-actions button.ep-star{color:var(--gold);}
+  .edit-photo-row input[type=file]{font-size:0.82rem;}
 
   .modal-actions{display:flex; gap:12px; flex-wrap:wrap; padding:0 26px 26px;}
   .btn{display:inline-flex; align-items:center; gap:8px; padding:11px 20px; border-radius:3px; font-weight:600; font-size:0.86rem; cursor:pointer; border:none; text-decoration:none;}
@@ -189,6 +210,11 @@
           <input type="number" id="f_age_min" placeholder="Age min">
           <span>–</span>
           <input type="number" id="f_age_max" placeholder="Age max">
+        </div>
+        <div class="age-range">
+          <input type="number" id="f_birth_year_min" placeholder="Birth yr from" min="1900" max="2100">
+          <span>–</span>
+          <input type="number" id="f_birth_year_max" placeholder="Birth yr to" min="1900" max="2100">
         </div>
         <select id="f_marital_status"><option value="">Marital Status — Any</option>
           <option>Single</option><option>Widow</option><option>Widower</option><option>Divorced</option><option>Separated</option>
@@ -273,10 +299,15 @@
     </div>
     <div class="modal-gallery" id="modalGallery"></div>
     <div class="modal-body" id="modalBody"></div>
-    <div class="modal-actions">
+    <div class="modal-actions" id="viewActions">
       <a class="btn btn-gold" id="btnPdf" target="_blank">Download Biodata (PDF)</a>
       <a class="btn btn-outline" id="btnPng" target="_blank">Download Biodata (PNG)</a>
+      <button class="btn btn-outline" id="btnEdit">Edit Profile</button>
       <button class="btn btn-danger" id="btnDelete">Delete Profile</button>
+    </div>
+    <div class="modal-actions" id="editActions" style="display:none;">
+      <button class="btn btn-gold" id="btnSaveEdit">Save Changes</button>
+      <button class="btn btn-outline" id="btnCancelEdit">Cancel</button>
     </div>
     <div class="qr-box">
       <img id="qrImg" src="" alt="QR Code">
@@ -296,6 +327,7 @@
 
 <script>
   const FIELD_LABELS = {
+    full_name:"Full Name", gender:"Gender", profile_for:"Registering For",
     father_name:"Father's Name", mother_name:"Mother's Name", guardian_name:"Guardian's Name",
     dob:"Date of Birth", time_of_birth:"Time of Birth", place_of_birth:"Place of Birth",
     age:"Age", height:"Height", weight:"Weight", blood_group:"Blood Group", complexion:"Complexion",
@@ -320,6 +352,7 @@
   };
 
   const SECTIONS = [
+    ["Identity", ["full_name","gender","profile_for"]],
     ["Basic Information", ["father_name","mother_name","guardian_name","dob","time_of_birth","place_of_birth","age","height","weight","blood_group","complexion","body_type","nationality","religion","community","sindhi_caste","sub_caste","mother_tongue"]],
     ["Marital Status", ["marital_status","children"]],
     ["Occupation & Career", ["occupation","career","company","business","designation","income_monthly","income_yearly"]],
@@ -332,7 +365,20 @@
     ["Verification (Admin Only)", ["aadhar_number","passport_number","status"]],
   ];
 
+  const SELECT_FIELDS = {
+    gender: ["Male","Female"],
+    profile_for: ["Bride","Groom"],
+    marital_status: ["Single","Widow","Widower","Divorced","Separated"],
+    smoking: ["No","Yes","Occasionally"],
+    drinking: ["No","Yes","Occasionally"],
+    manglik: ["Yes","No","Partial"],
+    status: ["Active","Inactive","Matched","Hold"],
+  };
+  const TEXTAREA_FIELDS = new Set(["about_yourself","horoscope_notes","special_notes","permanent_address","temporary_address"]);
+  const EDITABLE_FIELDS = new Set(SECTIONS.flatMap(([, fields]) => fields));
+
   let currentProfileId = null;
+  let currentProfileData = null;
 
   async function checkAuth(){
     const res = await fetch('/api/me');
@@ -386,6 +432,10 @@
     const amax = document.getElementById('f_age_max').value;
     if (amin) params.set('age_min', amin);
     if (amax) params.set('age_max', amax);
+    const bymin = document.getElementById('f_birth_year_min').value;
+    const bymax = document.getElementById('f_birth_year_max').value;
+    if (bymin) params.set('birth_year_min', bymin);
+    if (bymax) params.set('birth_year_max', bymax);
     return params.toString();
   }
 
@@ -432,11 +482,18 @@
     const res = await fetch('/api/profile/' + id);
     const d = await res.json();
     if (!d.success) return;
-    const p = d.profile;
+    currentProfileData = d.profile;
+    renderGallery(currentProfileData);
+    renderViewMode(currentProfileData);
 
-    document.getElementById('mName').textContent = p.full_name || 'Unnamed Profile';
-    document.getElementById('mSub').textContent = `${p.profile_for || '—'} · ${p.gender || '—'} · ${p.age || '—'} yrs`;
+    document.getElementById('btnPdf').href = `/biodata/${id}/pdf`;
+    document.getElementById('btnPng').href = `/biodata/${id}/png`;
+    document.getElementById('qrImg').src = `/api/profile/${id}/qr.png`;
 
+    document.getElementById('modalOverlay').classList.add('show');
+  }
+
+  function renderGallery(p){
     const gallery = document.getElementById('modalGallery');
     gallery.innerHTML = '';
     (p.photos || []).forEach(src => {
@@ -446,8 +503,13 @@
       gallery.appendChild(img);
     });
     if (!p.photos || p.photos.length === 0){
-      gallery.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem; padding:6px 0;">No photos uploaded.</div>';
+      gallery.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem; padding:6px 0;">No photo uploaded.</div>';
     }
+  }
+
+  function renderViewMode(p){
+    document.getElementById('mName').textContent = p.full_name || 'Unnamed Profile';
+    document.getElementById('mSub').textContent = `${p.profile_for || '—'} · ${p.gender || '—'} · ${p.age || '—'} yrs`;
 
     const body = document.getElementById('modalBody');
     body.innerHTML = '';
@@ -460,15 +522,145 @@
         return `<div class="mfield"><div class="l">${label}</div><div class="v">${val}</div></div>`;
       }).join('');
       sec.innerHTML = `<h3>${title}</h3><div class="mgrid">${grid}</div>`;
+      if (title === 'Verification (Admin Only)'){
+        const vphotos = [];
+        if (p.aadhar_photo_path) vphotos.push(['Aadhar Photo', p.aadhar_photo_path]);
+        if (p.passport_photo_path) vphotos.push(['Passport Photo', p.passport_photo_path]);
+        if (vphotos.length){
+          const vwrap = document.createElement('div');
+          vwrap.className = 'verify-photos';
+          vwrap.innerHTML = vphotos.map(([label, src]) =>
+            `<div class="vphoto"><img src="${src}" data-src="${src}"><span>${label}</span></div>`
+          ).join('');
+          vwrap.querySelectorAll('img').forEach(img => {
+            img.addEventListener('click', () => openLightbox(img.dataset.src));
+          });
+          sec.appendChild(vwrap);
+        }
+      }
       body.appendChild(sec);
     });
 
-    document.getElementById('btnPdf').href = `/biodata/${id}/pdf`;
-    document.getElementById('btnPng').href = `/biodata/${id}/png`;
-    document.getElementById('qrImg').src = `/api/profile/${id}/qr.png`;
-
-    document.getElementById('modalOverlay').classList.add('show');
+    document.getElementById('viewActions').style.display = 'flex';
+    document.getElementById('editActions').style.display = 'none';
   }
+
+  function renderEditMode(p){
+    const body = document.getElementById('modalBody');
+    body.innerHTML = '';
+
+    const photoRow = document.createElement('div');
+    photoRow.className = 'edit-photo-row';
+    const thumbs = (p.photo_list || []).map(ph => `
+      <div class="edit-photo-item ${ph.is_primary ? 'is-primary' : ''}" data-photo-id="${ph.id}">
+        ${ph.is_primary ? '<span class="ep-badge">Main</span>' : ''}
+        <img src="${ph.url}">
+        <div class="ep-actions">
+          ${ph.is_primary ? '' : '<button type="button" class="ep-star" data-action="primary">Set Main</button>'}
+          <button type="button" class="ep-del" data-action="delete">Delete</button>
+        </div>
+      </div>`).join('');
+    photoRow.innerHTML = `
+      <label>Photos</label>
+      <div class="edit-photo-grid" id="editPhotoGrid">${thumbs || '<span style="color:var(--text-muted); font-size:0.85rem;">No photos uploaded.</span>'}</div>
+      <input type="file" id="editPhotoInput" accept="image/*" multiple>
+      <div style="font-size:0.78rem; color:var(--text-muted); margin-top:6px;">Select one or more files to add more photos.</div>`;
+    body.appendChild(photoRow);
+
+    photoRow.querySelectorAll('[data-action="delete"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const item = btn.closest('.edit-photo-item');
+        const photoId = item.dataset.photoId;
+        if (!confirm('Delete this photo?')) return;
+        await fetch('/api/photo/' + photoId, {method:'DELETE'});
+        const res = await fetch('/api/profile/' + currentProfileId);
+        const d = await res.json();
+        currentProfileData = d.profile;
+        renderEditMode(currentProfileData);
+      });
+    });
+    photoRow.querySelectorAll('[data-action="primary"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const item = btn.closest('.edit-photo-item');
+        const photoId = item.dataset.photoId;
+        await fetch('/api/photo/' + photoId + '/primary', {method:'POST'});
+        const res = await fetch('/api/profile/' + currentProfileId);
+        const d = await res.json();
+        currentProfileData = d.profile;
+        renderEditMode(currentProfileData);
+      });
+    });
+
+    SECTIONS.forEach(([title, fields]) => {
+      const sec = document.createElement('div');
+      sec.className = 'msection';
+      const grid = fields.map(f => {
+        const label = FIELD_LABELS[f] || f;
+        const val = (p[f] === null || p[f] === undefined) ? '' : p[f];
+        let input;
+        if (SELECT_FIELDS[f]){
+          const opts = SELECT_FIELDS[f].map(o => `<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('');
+          input = `<select data-field="${f}"><option value="">—</option>${opts}</select>`;
+        } else if (TEXTAREA_FIELDS.has(f)){
+          input = `<textarea data-field="${f}">${val}</textarea>`;
+        } else if (f === 'dob'){
+          input = `<input type="date" data-field="${f}" value="${val}">`;
+        } else {
+          input = `<input type="text" data-field="${f}" value="${val.toString().replace(/"/g,'&quot;')}">`;
+        }
+        return `<div class="mfield"><div class="l">${label}</div>${input}</div>`;
+      }).join('');
+      sec.innerHTML = `<h3>${title}</h3><div class="mgrid">${grid}</div>`;
+      body.appendChild(sec);
+    });
+
+    document.getElementById('viewActions').style.display = 'none';
+    document.getElementById('editActions').style.display = 'flex';
+  }
+
+  document.getElementById('btnEdit').addEventListener('click', () => {
+    if (currentProfileData) renderEditMode(currentProfileData);
+  });
+
+  document.getElementById('btnCancelEdit').addEventListener('click', () => {
+    if (currentProfileData) renderViewMode(currentProfileData);
+  });
+
+  document.getElementById('btnSaveEdit').addEventListener('click', async () => {
+    if (!currentProfileId) return;
+    const saveBtn = document.getElementById('btnSaveEdit');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+
+    const updates = {};
+    document.querySelectorAll('#modalBody [data-field]').forEach(el => {
+      if (EDITABLE_FIELDS.has(el.dataset.field)) updates[el.dataset.field] = el.value;
+    });
+
+    try {
+      const res = await fetch('/api/profile/' + currentProfileId, {
+        method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(updates)
+      });
+      const d = await res.json();
+      if (!d.success){ alert(d.message || 'Failed to save changes.'); saveBtn.disabled = false; saveBtn.textContent = 'Save Changes'; return; }
+
+      const photoFiles = document.getElementById('editPhotoInput').files;
+      if (photoFiles && photoFiles.length){
+        const fd = new FormData();
+        for (const f of photoFiles) fd.append('photos', f);
+        await fetch('/api/profile/' + currentProfileId + '/photos', {method:'POST', body: fd});
+      }
+
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save Changes';
+      await openModal(currentProfileId);
+      loadProfiles();
+    } catch (e){
+      alert('Could not reach server.');
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save Changes';
+    }
+  });
 
   document.getElementById('modalCloseBtn').addEventListener('click', () => {
     document.getElementById('modalOverlay').classList.remove('show');

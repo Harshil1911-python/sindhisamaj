@@ -18,7 +18,8 @@ runtime folder the app creates on its own to store photos/documents.
 | `schema.sql` | SQLite schema |
 | `requirements.txt` | Python dependencies |
 | `Procfile` / `render.yaml` | Deployment config for Render |
-| `bg.png` | Placeholder hero background — **replace with a real photo/graphic** of your choice, same filename |
+| `bg.png` | Desktop hero background — **replace with a real photo/graphic**, same filename |
+| `bgmob.png` | Mobile hero background (shown instead of `bg.png` on phones) — replace with a portrait-oriented image, same filename |
 
 ## Running locally
 
@@ -54,7 +55,22 @@ Password).
   downloads generated on the fly from the profile data.
 - The **QR code** on each profile links to `details.html?token=...` — a
   public, read-only page with no admin controls and no verification
-  documents (Aadhar/passport are always stripped from this view).
+  documents (Aadhar/passport photos and numbers are always stripped from
+  this view — only visible to admins in `view.html`).
+- Each profile can have **multiple photos** — uploaded together during
+  registration (first one becomes the main display photo), and admins can
+  add more, delete individual ones, or change which one is the "main"
+  photo from the **Edit Profile** screen in `view.html`.
+- **Edit Profile**: inside the detail modal in `view.html`, click "Edit
+  Profile" to turn every field into an editable input (with dropdowns for
+  fields like gender, marital status, manglik, status, etc.), replace the
+  photo, and save — updates are written straight to the database.
+- **Filters** now include a **Birth Year range** (in addition to Age range)
+  so you can search by year of birth directly.
+- The **landing page background** automatically switches between `bg.png`
+  (desktop/tablet) and `bgmob.png` (phones), detected via screen width and
+  user agent — replace both files with your own artwork, keeping the same
+  filenames.
 - **CSV Export/Import** on the Dashboard uses the exact field set from
   `register.html`, so a spreadsheet edited externally can be re-imported.
 - **Backup/Restore** downloads or replaces the raw SQLite `database.db`
@@ -81,5 +97,6 @@ Password).
 - `register.html` was extended from your example with a **Photos** section
   (multiple file upload) since the admin card/QR view needs profile photos.
   Password is now optional (members don't log in — only admins do).
-- Verification documents (Aadhar, passport) are visible to admins only and
-  are always excluded from the public QR/details view.
+- Verification documents (Aadhar, passport — both numbers and photos) are
+  visible to admins only in `view.html`, and are always excluded from the
+  public QR/details view.

@@ -297,17 +297,19 @@ def register():
     cur = db.execute(sql, vals)
     profile_id = cur.lastrowid
 
-    # gallery photos (multiple)
+    db.commit()
+
+    # profile photos (multiple allowed)
     files = request.files.getlist("photos")
     for i, fs in enumerate(files):
         if fs and fs.filename and allowed_ext(fs.filename, ALLOWED_IMAGE_EXT):
-            saved = save_upload(fs, f"gallery_{profile_id}")
+            saved = save_upload(fs, f"photo_{profile_id}")
             db.execute(
                 "INSERT INTO photos (profile_id, filepath, is_primary, sort_order) VALUES (?, ?, ?, ?)",
                 (profile_id, saved, 1 if i == 0 else 0, i),
             )
-
     db.commit()
+
     return jsonify({"success": True, "profile_id": profile_id})
 
 
@@ -321,10 +323,11 @@ def row_to_dict(row):
 
 def attach_photos(db, profile):
     rows = db.execute(
-        "SELECT id, filepath, is_primary FROM photos WHERE profile_id = ? ORDER BY sort_order ASC",
+        "SELECT id, filepath, is_primary FROM photos WHERE profile_id = ? ORDER BY is_primary DESC, sort_order ASC",
         (profile["id"],),
     ).fetchall()
     profile["photos"] = [f"/uploads/{r['filepath']}" for r in rows]
+    profile["photo_list"] = [{"id": r["id"], "url": f"/uploads/{r['filepath']}", "is_primary": bool(r["is_primary"])} for r in rows]
     profile["primary_photo"] = profile["photos"][0] if profile["photos"] else None
     for f in ["kundli_pdf_path", "aadhar_photo_path", "passport_photo_path"]:
         if profile.get(f):
@@ -370,6 +373,15 @@ def api_profiles():
     if age_max:
         q += " AND age <= ?"
         args.append(age_max)
+
+    birth_year_min = request.args.get("birth_year_min")
+    birth_year_max = request.args.get("birth_year_max")
+    if birth_year_min:
+        q += " AND CAST(substr(dob, 1, 4) AS INTEGER) >= ?"
+        args.append(birth_year_min)
+    if birth_year_max:
+        q += " AND CAST(substr(dob, 1, 4) AS INTEGER) <= ?"
+        args.append(birth_year_max)
 
     search = request.args.get("search")
     if search:
@@ -455,6 +467,65 @@ def api_profile_update(profile_id):
 def api_profile_delete(profile_id):
     db = get_db()
     db.execute("DELETE FROM profiles WHERE id = ?", (profile_id,))
+    db.commit()
+    return jsonify({"success": True})
+
+
+@app.route("/api/profile/<int:profile_id>/photos", methods=["POST"])
+@login_required
+def api_profile_add_photos(profile_id):
+    db = get_db()
+    row = db.execute("SELECT id FROM profiles WHERE id = ?", (profile_id,)).fetchone()
+    if not row:
+        abort(404)
+    files = request.files.getlist("photos")
+    if not files:
+        return jsonify({"success": False, "message": "Please choose at least one photo."}), 400
+
+    existing_count = db.execute("SELECT COUNT(*) FROM photos WHERE profile_id = ?", (profile_id,)).fetchone()[0]
+    added = []
+    for i, fs in enumerate(files):
+        if fs and fs.filename and allowed_ext(fs.filename, ALLOWED_IMAGE_EXT):
+            saved = save_upload(fs, f"photo_{profile_id}")
+            is_primary = 1 if existing_count == 0 and i == 0 else 0
+            db.execute(
+                "INSERT INTO photos (profile_id, filepath, is_primary, sort_order) VALUES (?, ?, ?, ?)",
+                (profile_id, saved, is_primary, existing_count + i),
+            )
+            added.append(f"/uploads/{saved}")
+    db.commit()
+    return jsonify({"success": True, "added": added})
+
+
+@app.route("/api/photo/<int:photo_id>", methods=["DELETE"])
+@login_required
+def api_delete_photo(photo_id):
+    db = get_db()
+    row = db.execute("SELECT * FROM photos WHERE id = ?", (photo_id,)).fetchone()
+    if not row:
+        abort(404)
+    profile_id = row["profile_id"]
+    was_primary = row["is_primary"]
+    db.execute("DELETE FROM photos WHERE id = ?", (photo_id,))
+    if was_primary:
+        nxt = db.execute(
+            "SELECT id FROM photos WHERE profile_id = ? ORDER BY sort_order ASC LIMIT 1", (profile_id,)
+        ).fetchone()
+        if nxt:
+            db.execute("UPDATE photos SET is_primary = 1 WHERE id = ?", (nxt["id"],))
+    db.commit()
+    return jsonify({"success": True})
+
+
+@app.route("/api/photo/<int:photo_id>/primary", methods=["POST"])
+@login_required
+def api_set_primary_photo(photo_id):
+    db = get_db()
+    row = db.execute("SELECT * FROM photos WHERE id = ?", (photo_id,)).fetchone()
+    if not row:
+        abort(404)
+    db.execute("UPDATE photos SET is_primary = 0 WHERE profile_id = ?", (row["profile_id"],))
+    db.execute("UPDATE photos SET is_primary = 1 WHERE id = ?", (photo_id,))
     db.commit()
     return jsonify({"success": True})
 
