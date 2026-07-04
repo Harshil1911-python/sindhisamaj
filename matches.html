@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matches — Sindhi Samaj Surat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14161f; --indigo:#1b3a63; --maroon:#8b1e3f; --gold:#c9972b; --gold-soft:#e0b559;
+    --cream:#f6f0e4; --cream-soft:#fbf8f1; --line: rgba(201,151,43,0.35); --text-muted:#5a5648;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Mukta', sans-serif; color:var(--ink); background:var(--cream-soft);}
+  h1,h2,h3{font-family:'Cormorant Garamond', serif; font-weight:700;}
+  a{text-decoration:none; color:inherit;}
+
+  header{background:var(--ink); padding:12px 22px; position:sticky; top:0; z-index:50;}
+  .nav-wrap{max-width:1100px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;}
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand-mark{width:30px; height:30px; border-radius:50%; background:conic-gradient(from 45deg, var(--gold), var(--maroon), var(--indigo), var(--gold)); display:flex; align-items:center; justify-content:center; font-family:'Cormorant Garamond',serif; font-weight:700; color:var(--cream); font-size:0.85rem;}
+  .brand-text{color:var(--cream-soft); font-family:'Cormorant Garamond',serif; font-weight:700; font-size:1rem;}
+  .nav-right a{color:rgba(246,240,228,0.75); font-size:0.85rem; background:transparent; border:1px solid rgba(246,240,228,0.35); padding:7px 14px; border-radius:3px;}
+  .nav-right a:hover{color:var(--gold-soft); border-color:var(--gold-soft);}
+
+  .ajrak-strip{
+    height:8px; width:100%;
+    background-image:
+      linear-gradient(135deg, var(--gold) 25%, transparent 25%),
+      linear-gradient(225deg, var(--gold) 25%, transparent 25%),
+      linear-gradient(45deg, var(--gold) 25%, transparent 25%),
+      linear-gradient(315deg, var(--gold) 25%, var(--indigo) 25%);
+    background-position: 9px 0, 9px 0, 0 0, 0 0;
+    background-size: 18px 18px; background-repeat: repeat-x; background-color: var(--maroon);
+  }
+
+  main{max-width:1100px; margin:0 auto; padding:34px 22px 70px;}
+  .page-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; flex-wrap:wrap; gap:12px;}
+  .page-head h1{font-size:1.7rem; color:var(--indigo);}
+  .filter-tabs{display:flex; gap:8px; flex-wrap:wrap;}
+  .filter-tabs button{
+    padding:8px 16px; border-radius:20px; border:1px solid var(--line); background:var(--cream);
+    font-size:0.82rem; font-weight:600; cursor:pointer; color:var(--text-muted);
+  }
+  .filter-tabs button.active{background:var(--maroon); color:#fff; border-color:var(--maroon);}
+
+  .match-card{
+    background:var(--cream); border:1px solid var(--line); border-radius:4px; padding:20px 22px;
+    margin-bottom:16px; display:flex; align-items:center; gap:22px; flex-wrap:wrap;
+  }
+  .match-pair{display:flex; align-items:center; gap:14px; flex:1; min-width:280px;}
+  .match-photo{width:64px; height:80px; object-fit:cover; border-radius:3px; border:1px solid var(--line); background:linear-gradient(135deg,var(--indigo),var(--maroon));}
+  .match-heart{color:var(--maroon); font-size:1.3rem;}
+  .match-name{font-size:0.95rem; color:var(--ink); font-weight:600;}
+  .match-sub{font-size:0.78rem; color:var(--text-muted);}
+  .match-status{
+    font-size:0.72rem; font-weight:700; padding:4px 12px; border-radius:20px; text-transform:uppercase; letter-spacing:0.04em;
+  }
+  .match-status.Proposed{background:rgba(201,151,43,0.18); color:#8a6512;}
+  .match-status.Accepted{background:rgba(27,58,99,0.14); color:var(--indigo);}
+  .match-status.Declined{background:rgba(139,30,63,0.12); color:var(--maroon);}
+  .match-actions{display:flex; gap:8px; flex-wrap:wrap;}
+  .match-actions select{padding:8px 10px; border-radius:3px; border:1px solid rgba(27,58,99,0.25); font-size:0.82rem;}
+  .match-actions button{padding:8px 14px; border-radius:3px; font-size:0.82rem; font-weight:600; cursor:pointer; border:1px solid var(--maroon); background:transparent; color:var(--maroon);}
+  .match-actions button:hover{background:rgba(139,30,63,0.08);}
+  .match-notes{width:100%; margin-top:12px; font-size:0.84rem; color:var(--text-muted); padding-top:12px; border-top:1px dashed var(--line);}
+  .empty{padding:60px 20px; text-align:center; color:var(--text-muted);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav-wrap">
+    <div class="brand"><div class="brand-mark">S</div><div class="brand-text">Matches</div></div>
+    <div class="nav-right"><a href="admin.html">&larr; Dashboard</a></div>
+  </div>
+</header>
+<div class="ajrak-strip"></div>
+
+<main>
+  <div class="page-head">
+    <h1>Shortlisted Matches</h1>
+    <div class="filter-tabs" id="filterTabs">
+      <button data-status="" class="active">All</button>
+      <button data-status="Proposed">Proposed</button>
+      <button data-status="Accepted">Accepted</button>
+      <button data-status="Declined">Declined</button>
+    </div>
+  </div>
+  <div id="matchList"></div>
+</main>
+
+<script>
+  let activeStatus = '';
+
+  document.getElementById('filterTabs').addEventListener('click', (e) => {
+    if (e.target.tagName !== 'BUTTON') return;
+    document.querySelectorAll('#filterTabs button').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    activeStatus = e.target.dataset.status;
+    loadMatches();
+  });
+
+  async function checkAuth(){
+    const res = await fetch('/api/me');
+    const d = await res.json();
+    if (!d.authenticated) window.location.href = 'signin.html';
+  }
+
+  async function loadMatches(){
+    const list = document.getElementById('matchList');
+    list.innerHTML = '<div class="empty">Loading…</div>';
+    const qs = activeStatus ? ('?status=' + encodeURIComponent(activeStatus)) : '';
+    const res = await fetch('/api/matches' + qs);
+    const d = await res.json();
+    if (!d.success || d.count === 0){
+      list.innerHTML = '<div class="empty">No matches shortlisted yet. Use "Compare Profiles" or "Suggest Matches" in Walk-in View to shortlist a pair.</div>';
+      return;
+    }
+    list.innerHTML = '';
+    d.matches.forEach(m => list.appendChild(renderMatch(m)));
+  }
+
+  function renderMatch(m){
+    const a = m.profile_a || {};
+    const b = m.profile_b || {};
+    const el = document.createElement('div');
+    el.className = 'match-card';
+    el.innerHTML = `
+      <div class="match-pair">
+        <img class="match-photo" src="${a.primary_photo || ''}">
+        <div>
+          <div class="match-name">${a.full_name || 'Unknown'}</div>
+          <div class="match-sub">${a.age || '—'} yrs · ${a.current_city || '—'}</div>
+        </div>
+        <span class="match-heart">&#10084;</span>
+        <img class="match-photo" src="${b.primary_photo || ''}">
+        <div>
+          <div class="match-name">${b.full_name || 'Unknown'}</div>
+          <div class="match-sub">${b.age || '—'} yrs · ${b.current_city || '—'}</div>
+        </div>
+      </div>
+      <div class="match-actions">
+        <span class="match-status ${m.status}">${m.status}</span>
+        <select data-match="${m.id}">
+          <option value="Proposed" ${m.status==='Proposed'?'selected':''}>Proposed</option>
+          <option value="Accepted" ${m.status==='Accepted'?'selected':''}>Accepted</option>
+          <option value="Declined" ${m.status==='Declined'?'selected':''}>Declined</option>
+        </select>
+        <button data-delete="${m.id}">Remove</button>
+      </div>
+      ${m.notes ? `<div class="match-notes">${m.notes}</div>` : ''}
+    `;
+    el.querySelector('select').addEventListener('change', async (e) => {
+      await fetch('/api/matches/' + m.id, {
+        method:'PUT', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({status: e.target.value})
+      });
+      loadMatches();
+    });
+    el.querySelector('[data-delete]').addEventListener('click', async () => {
+      if (!confirm('Remove this shortlisted match?')) return;
+      await fetch('/api/matches/' + m.id, {method:'DELETE'});
+      loadMatches();
+    });
+    return el;
+  }
+
+  checkAuth();
+  loadMatches();
+</script>
+</body>
+</html>

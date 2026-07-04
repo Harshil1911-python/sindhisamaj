@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reports — Sindhi Samaj Surat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#14161f; --indigo:#1b3a63; --maroon:#8b1e3f; --gold:#c9972b; --gold-soft:#e0b559;
+    --cream:#f6f0e4; --cream-soft:#fbf8f1; --line: rgba(201,151,43,0.35); --text-muted:#5a5648;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Mukta', sans-serif; color:var(--ink); background:var(--cream-soft);}
+  h1,h2,h3{font-family:'Cormorant Garamond', serif; font-weight:700;}
+  a{text-decoration:none; color:inherit;}
+
+  header{background:var(--ink); padding:12px 22px; position:sticky; top:0; z-index:50;}
+  .nav-wrap{max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;}
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand-mark{width:30px; height:30px; border-radius:50%; background:conic-gradient(from 45deg, var(--gold), var(--maroon), var(--indigo), var(--gold)); display:flex; align-items:center; justify-content:center; font-family:'Cormorant Garamond',serif; font-weight:700; color:var(--cream); font-size:0.85rem;}
+  .brand-text{color:var(--cream-soft); font-family:'Cormorant Garamond',serif; font-weight:700; font-size:1rem;}
+  .nav-right a{color:rgba(246,240,228,0.75); font-size:0.85rem; background:transparent; border:1px solid rgba(246,240,228,0.35); padding:7px 14px; border-radius:3px;}
+  .nav-right a:hover{color:var(--gold-soft); border-color:var(--gold-soft);}
+
+  .ajrak-strip{
+    height:8px; width:100%;
+    background-image:
+      linear-gradient(135deg, var(--gold) 25%, transparent 25%),
+      linear-gradient(225deg, var(--gold) 25%, transparent 25%),
+      linear-gradient(45deg, var(--gold) 25%, transparent 25%),
+      linear-gradient(315deg, var(--gold) 25%, var(--indigo) 25%);
+    background-position: 9px 0, 9px 0, 0 0, 0 0;
+    background-size: 18px 18px; background-repeat: repeat-x; background-color: var(--maroon);
+  }
+
+  main{max-width:1200px; margin:0 auto; padding:34px 22px 70px;}
+  h1.title{font-size:1.8rem; color:var(--indigo); margin-bottom:22px;}
+
+  .stats-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-bottom:30px;}
+  .stat-card{background:var(--cream); border:1px solid var(--line); border-left:4px solid var(--gold); padding:20px 22px; border-radius:2px;}
+  .stat-card .n{font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:700; color:var(--indigo);}
+  .stat-card .l{font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-top:4px;}
+
+  .charts-grid{display:grid; grid-template-columns:1fr 1fr; gap:22px;}
+  .chart-panel{background:var(--cream); border:1px solid var(--line); border-left:4px solid var(--indigo); padding:22px; border-radius:2px;}
+  .chart-panel h2{font-size:1.1rem; color:var(--indigo); margin-bottom:14px;}
+  .chart-panel.full{grid-column:1/-1;}
+  canvas{max-height:280px;}
+
+  @media (max-width:900px){
+    .stats-grid{grid-template-columns:1fr 1fr;}
+    .charts-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav-wrap">
+    <div class="brand"><div class="brand-mark">S</div><div class="brand-text">Reports &amp; Analytics</div></div>
+    <div class="nav-right"><a href="admin.html">&larr; Dashboard</a></div>
+  </div>
+</header>
+<div class="ajrak-strip"></div>
+
+<main>
+  <h1 class="title">Data &amp; Reporting</h1>
+
+  <div class="stats-grid">
+    <div class="stat-card"><div class="n" id="statTotal">—</div><div class="l">Total Profiles</div></div>
+    <div class="stat-card"><div class="n" id="statPending">—</div><div class="l">Pending Approval</div></div>
+    <div class="stat-card"><div class="n" id="statMatches">—</div><div class="l">Shortlisted Matches</div></div>
+    <div class="stat-card"><div class="n" id="statAccepted">—</div><div class="l">Accepted Matches</div></div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-panel full">
+      <h2>Registrations Over Time</h2>
+      <canvas id="chartMonths"></canvas>
+    </div>
+    <div class="chart-panel">
+      <h2>Male vs Female</h2>
+      <canvas id="chartGender"></canvas>
+    </div>
+    <div class="chart-panel">
+      <h2>Status Breakdown</h2>
+      <canvas id="chartStatus"></canvas>
+    </div>
+    <div class="chart-panel">
+      <h2>Age Distribution</h2>
+      <canvas id="chartAge"></canvas>
+    </div>
+    <div class="chart-panel">
+      <h2>Marital Status</h2>
+      <canvas id="chartMarital"></canvas>
+    </div>
+    <div class="chart-panel">
+      <h2>Top Cities</h2>
+      <canvas id="chartCities"></canvas>
+    </div>
+    <div class="chart-panel">
+      <h2>Top Sindhi Castes</h2>
+      <canvas id="chartCastes"></canvas>
+    </div>
+  </div>
+</main>
+
+<script>
+  const PALETTE = ['#c9972b','#8b1e3f','#1b3a63','#e0b559','#5a5648','#a4254a','#2f5486','#d8bd85'];
+
+  async function checkAuth(){
+    const res = await fetch('/api/me');
+    const d = await res.json();
+    if (!d.authenticated) window.location.href = 'signin.html';
+  }
+
+  function baseOptions(extra){
+    return Object.assign({
+      responsive: true,
+      plugins: { legend: { labels: { font: { family: 'Mukta' } } } }
+    }, extra || {});
+  }
+
+  async function loadReports(){
+    const [statsRes, reportsRes] = await Promise.all([fetch('/api/stats'), fetch('/api/reports')]);
+    const stats = await statsRes.json();
+    const rep = await reportsRes.json();
+    if (!stats.success || !rep.success) return;
+
+    document.getElementById('statTotal').textContent = stats.total;
+    document.getElementById('statPending').textContent = stats.pending;
+    document.getElementById('statMatches').textContent = rep.total_matches;
+    document.getElementById('statAccepted').textContent = rep.accepted_matches;
+
+    new Chart(document.getElementById('chartMonths'), {
+      type: 'line',
+      data: {
+        labels: rep.registrations_by_month.map(x => x.label),
+        datasets: [{
+          label: 'New Registrations',
+          data: rep.registrations_by_month.map(x => x.count),
+          borderColor: '#8b1e3f', backgroundColor: 'rgba(139,30,63,0.12)', fill: true, tension: 0.3
+        }]
+      },
+      options: baseOptions({ plugins: { legend: { display: false } } })
+    });
+
+    new Chart(document.getElementById('chartGender'), {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(rep.by_gender),
+        datasets: [{ data: Object.values(rep.by_gender), backgroundColor: PALETTE }]
+      },
+      options: baseOptions()
+    });
+
+    new Chart(document.getElementById('chartStatus'), {
+      type: 'pie',
+      data: {
+        labels: Object.keys(rep.by_status),
+        datasets: [{ data: Object.values(rep.by_status), backgroundColor: PALETTE }]
+      },
+      options: baseOptions()
+    });
+
+    new Chart(document.getElementById('chartAge'), {
+      type: 'bar',
+      data: {
+        labels: rep.age_distribution.map(x => x.label),
+        datasets: [{ label: 'Profiles', data: rep.age_distribution.map(x => x.count), backgroundColor: '#1b3a63' }]
+      },
+      options: baseOptions({ plugins: { legend: { display: false } } })
+    });
+
+    new Chart(document.getElementById('chartMarital'), {
+      type: 'bar',
+      data: {
+        labels: rep.by_marital_status.map(x => x.label),
+        datasets: [{ label: 'Profiles', data: rep.by_marital_status.map(x => x.count), backgroundColor: '#c9972b' }]
+      },
+      options: baseOptions({ indexAxis: 'y', plugins: { legend: { display: false } } })
+    });
+
+    new Chart(document.getElementById('chartCities'), {
+      type: 'bar',
+      data: {
+        labels: rep.top_cities.map(x => x.label),
+        datasets: [{ label: 'Profiles', data: rep.top_cities.map(x => x.count), backgroundColor: '#8b1e3f' }]
+      },
+      options: baseOptions({ indexAxis: 'y', plugins: { legend: { display: false } } })
+    });
+
+    new Chart(document.getElementById('chartCastes'), {
+      type: 'bar',
+      data: {
+        labels: rep.top_castes.map(x => x.label),
+        datasets: [{ label: 'Profiles', data: rep.top_castes.map(x => x.count), backgroundColor: '#2f5486' }]
+      },
+      options: baseOptions({ indexAxis: 'y', plugins: { legend: { display: false } } })
+    });
+  }
+
+  checkAuth();
+  loadReports();
+</script>
+</body>
+</html>

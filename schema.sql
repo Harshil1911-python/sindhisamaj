@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS admins (
 CREATE TABLE IF NOT EXISTS profiles (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     public_token TEXT UNIQUE,
-    status TEXT DEFAULT 'Active',              -- Active / Inactive / Matched / Hold
+    status TEXT DEFAULT 'Pending',             -- Pending / Active / Inactive / Matched / Hold / Rejected
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now')),
 
@@ -106,7 +106,10 @@ CREATE TABLE IF NOT EXISTS profiles (
     passport_photo_path TEXT,
 
     -- Account
-    password_hash TEXT
+    password_hash TEXT,
+
+    -- Admin-only
+    admin_notes TEXT
 );
 
 CREATE TABLE IF NOT EXISTS photos (
@@ -118,7 +121,30 @@ CREATE TABLE IF NOT EXISTS photos (
     FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS matches (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    profile_a_id INTEGER NOT NULL,
+    profile_b_id INTEGER NOT NULL,
+    status TEXT DEFAULT 'Proposed',            -- Proposed / Accepted / Declined
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (profile_a_id) REFERENCES profiles(id) ON DELETE CASCADE,
+    FOREIGN KEY (profile_b_id) REFERENCES profiles(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS login_attempts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT,
+    ip TEXT,
+    success INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_photos_profile ON photos(profile_id);
 CREATE INDEX IF NOT EXISTS idx_profiles_gender ON profiles(gender);
 CREATE INDEX IF NOT EXISTS idx_profiles_city ON profiles(current_city);
 CREATE INDEX IF NOT EXISTS idx_profiles_caste ON profiles(sindhi_caste);
+CREATE INDEX IF NOT EXISTS idx_matches_a ON matches(profile_a_id);
+CREATE INDEX IF NOT EXISTS idx_matches_b ON matches(profile_b_id);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_lookup ON login_attempts(username, ip, created_at);

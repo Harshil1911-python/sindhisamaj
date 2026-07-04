@@ -270,11 +270,11 @@
       <div class="grid3">
         <div class="field"><label for="current_city">Current City *</label><input type="text" id="current_city" name="current_city" value="Surat" required></div>
         <div class="field"><label for="native_place">Native Place</label><input type="text" id="native_place" name="native_place"></div>
-        <div class="field"><label for="phone">Phone *</label><input type="tel" id="phone" name="phone" required></div>
-        <div class="field"><label for="alternate_phone">Alternate Phone</label><input type="tel" id="alternate_phone" name="alternate_phone"></div>
+        <div class="field"><label for="phone">Phone *</label><input type="tel" id="phone" name="phone" pattern="[6-9][0-9]{9}" maxlength="10" title="Enter a valid 10-digit Indian mobile number" required></div>
+        <div class="field"><label for="alternate_phone">Alternate Phone</label><input type="tel" id="alternate_phone" name="alternate_phone" pattern="[6-9][0-9]{9}" maxlength="10" title="Enter a valid 10-digit Indian mobile number"></div>
         <div class="field"><label for="email">Email *</label><input type="email" id="email" name="email" required></div>
-        <div class="field"><label for="whatsapp">WhatsApp Number</label><input type="tel" id="whatsapp" name="whatsapp"></div>
-        <div class="field"><label for="emergency_contact">Emergency Contact</label><input type="tel" id="emergency_contact" name="emergency_contact"></div>
+        <div class="field"><label for="whatsapp">WhatsApp Number</label><input type="tel" id="whatsapp" name="whatsapp" pattern="[6-9][0-9]{9}" maxlength="10" title="Enter a valid 10-digit Indian mobile number"></div>
+        <div class="field"><label for="emergency_contact">Emergency Contact</label><input type="tel" id="emergency_contact" name="emergency_contact" pattern="[6-9][0-9]{9}" maxlength="10" title="Enter a valid 10-digit Indian mobile number"></div>
         <div class="field full"><label for="permanent_address">Permanent Address</label><textarea id="permanent_address" name="permanent_address"></textarea></div>
         <div class="field full"><label for="temporary_address">Temporary Address</label><textarea id="temporary_address" name="temporary_address"></textarea></div>
       </div>
@@ -397,15 +397,15 @@
 
     <fieldset id="sec-account">
       <legend>Account</legend>
-      <span class="legend-note">Optional — set a password if you'd like to be able to update your profile later via the Samaj office.</span>
+      <span class="legend-note">Set a password so you can log in later to edit your own profile — you'll use your email or phone plus this password.</span>
       <div class="grid3">
-        <div class="field"><label for="password">Create Password <span class="hint">optional</span></label><input type="password" id="password" name="password" minlength="6"></div>
+        <div class="field"><label for="password">Create Password *</label><input type="password" id="password" name="password" minlength="6" required></div>
       </div>
     </fieldset>
 
     <div class="submit-row">
       <button type="submit" class="btn btn-gold" id="submitBtn">Submit profile</button>
-      <span class="login-hint">Registration is reviewed by the Samaj bureau — no login is required for members.</span>
+      <span class="login-hint">Already registered? <a href="login.html">Log in to edit your profile</a></span>
     </div>
 
     <div class="status-msg" id="statusMsg"></div>
@@ -418,6 +418,7 @@
   const submitBtn = document.getElementById('submitBtn');
   const dobInput = document.getElementById('dob');
   const ageInput = document.getElementById('age');
+  const DRAFT_KEY = 'sindhi_samaj_register_draft_v1';
 
   dobInput.addEventListener('change', () => {
     if (!dobInput.value) return;
@@ -433,6 +434,62 @@
     statusMsg.textContent = text;
     statusMsg.className = 'status-msg show ' + (ok ? 'ok' : 'err');
   }
+
+  // --- Save & Resume: auto-save text/select/textarea/date field values to
+  // localStorage as the person types, so a long form isn't lost if they
+  // close the tab. File/photo inputs can't be restored (browser security),
+  // so those are always re-selected on resume.
+  function collectDraftValues(){
+    const values = {};
+    form.querySelectorAll('input, select, textarea').forEach(el => {
+      if (el.type === 'file' || !el.name) return;
+      values[el.name] = el.value;
+    });
+    return values;
+  }
+
+  function saveDraft(){
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt: Date.now(), values: collectDraftValues() }));
+    } catch (e) { /* ignore quota errors */ }
+  }
+
+  function clearDraft(){
+    try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+  }
+
+  function applyDraft(values){
+    Object.entries(values).forEach(([name, val]) => {
+      const el = form.querySelector(`[name="${CSS.escape(name)}"]`);
+      if (el && el.type !== 'file') el.value = val;
+    });
+  }
+
+  let saveTimer = null;
+  form.addEventListener('input', () => {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveDraft, 600);
+  });
+
+  (function checkForDraft(){
+    let draft = null;
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch (e) {}
+    if (!draft || !draft.values) return;
+    const when = new Date(draft.savedAt).toLocaleString();
+    const banner = document.createElement('div');
+    banner.className = 'status-msg show ok';
+    banner.style.marginBottom = '20px';
+    banner.innerHTML = `You have unsaved progress from ${when}. <button type="button" id="resumeDraftBtn" style="margin-left:10px; font-weight:700; text-decoration:underline; background:none; border:none; cursor:pointer; color:inherit;">Resume</button> · <button type="button" id="discardDraftBtn" style="font-weight:700; text-decoration:underline; background:none; border:none; cursor:pointer; color:inherit;">Discard</button>`;
+    form.parentNode.insertBefore(banner, form);
+    document.getElementById('resumeDraftBtn').addEventListener('click', () => {
+      applyDraft(draft.values);
+      banner.remove();
+    });
+    document.getElementById('discardDraftBtn').addEventListener('click', () => {
+      clearDraft();
+      banner.remove();
+    });
+  })();
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -450,6 +507,7 @@
 
       if (res.ok && result.success) {
         showStatus('Profile submitted successfully. Thank you! The Samaj bureau will review your profile. Redirecting to home...', true);
+        clearDraft();
         form.reset();
         setTimeout(() => { window.location.href = 'landing.html'; }, 2200);
       } else {

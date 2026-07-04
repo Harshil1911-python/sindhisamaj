@@ -12,7 +12,11 @@ runtime folder the app creates on its own to store photos/documents.
 | `register.html` | Public registration form (all biodata fields + photos) |
 | `signin.html` | Admin sign-in |
 | `admin.html` | Admin dashboard — stats, CSV import/export, backup/restore, admin management |
-| `view.html` | **Main feature** — walk-in "View Profiles" screen: filter drawer + 3-column photo cards + detail modal + QR + biodata download |
+| `view.html` | **Main feature** — walk-in "View Profiles" screen: filter drawer + 3-column photo cards + detail modal + QR + biodata download + approve/reject + compare + kundli viewer + suggested matches |
+| `login.html` | Login page for registrants (separate from admin `signin.html`) — uses email/phone + the password set at registration |
+| `dashboard.html` | Self-service dashboard where a registrant can view/edit their own profile, manage photos, and change password |
+| `matches.html` | Review and manage shortlisted profile pairs (Proposed / Accepted / Declined) |
+| `reports.html` | Analytics dashboard — registration trends, gender/status/age/city/caste breakdowns |
 | `details.html` | Public, read-only profile page (this is where the QR code on each profile points — no admin functions) |
 | `app.py` | Flask backend (all routes, DB access, CSV, PDF/PNG biodata generation, QR generation) |
 | `schema.sql` | SQLite schema |
@@ -76,6 +80,89 @@ Password).
 - **Backup/Restore** downloads or replaces the raw SQLite `database.db`
   file.
 
+### Security & polish
+- **Login rate-limiting**: 5 failed sign-in attempts (per username or per IP)
+  locks further attempts for 15 minutes. This is enforced server-side, so
+  it can't be bypassed from the browser.
+- **Server-side validation** on registration: phone numbers must be valid
+  10-digit Indian mobile numbers, email must be a valid format — checked
+  both in the browser (`pattern` attributes) and again on the server.
+
+### Workflow & trust
+- **Approval queue**: every new self-registration is saved with status
+  `Pending` and is **hidden from Walk-in View by default**. The Dashboard
+  shows a "Pending Approvals" panel where you can Approve (→ `Active`) or
+  Reject (→ `Rejected`) each one. You can still see Pending/Rejected
+  profiles in `view.html` by explicitly selecting that status in the
+  filters.
+- **Admin Notes**: a private notes field on every profile (visible only in
+  the admin detail/edit view) for things like "met on 5 July, interested in
+  Ahmedabad matches" — never shown on the public QR/details page or in CSV
+  export.
+
+### Matching
+- **Compare Mode**: toggle it on in `view.html`, tick two profile cards,
+  and click "Compare Selected" for a side-by-side field comparison (with
+  differences bolded) — with a one-click "Shortlist This Pair" button.
+- **Suggest Matches**: inside a profile's detail modal, click "Suggest
+  Matches" to see a ranked list of opposite-gender active profiles, scored
+  by age closeness, same caste, same city, same marital status, and same
+  manglik status — shortlist any of them directly from the suggestion card.
+- **Matches page** (`matches.html`): review every shortlisted pair, filter
+  by Proposed / Accepted / Declined, update status, or remove a match.
+
+### Kundli PDF viewer
+- If a profile uploaded a Kundli PDF during registration, the "View Kundli
+  PDF" button in the detail modal opens it **inline** in an embedded viewer
+  (no download needed) — browsers render PDFs natively inside the `iframe`.
+
+### Data & Reporting (`reports.html`)
+- Registrations-over-time trend line, **Male vs Female split** (by `gender`, not registering-as Bride/Groom), status
+  breakdown, age distribution, marital status breakdown, top cities, and
+  top Sindhi castes — all pulled live from `/api/reports` and charted with
+  Chart.js (loaded from CDN).
+
+### Horoscope compatibility (approximate)
+- In Compare Mode, the comparison view now shows a simplified Ashtakoot-style
+  compatibility score covering 4 of the 8 traditional factors (Varna, Gana,
+  Nadi, Bhakoot) plus a Manglik check, computed from each profile's Rashi
+  and Nakshatra fields. **This is explicitly labeled as an approximate
+  screening aid** — the UI always shows a disclaimer recommending a full
+  36-guna reading from a qualified astrologer/pandit before finalizing any
+  match. If Rashi/Nakshatra spelling can't be recognized, it says so rather
+  than guessing.
+
+### Registrant self-service dashboard
+- Registration now **requires** a password (previously optional), since it's
+  used to log in later.
+- `login.html` — registrants log in with the email or phone + password they
+  set at registration (separate from the admin login, completely separate
+  session).
+- `dashboard.html` — registrants can see their own profile, a **completeness
+  %** bar, edit any of their details, manage their photo gallery (add,
+  delete, set main photo, **drag to reorder**), and change their password.
+  **Any self-edit sends the profile back to `Pending` for bureau
+  re-approval** before it's visible in Walk-in View again.
+- The same drag-to-reorder gallery UI was also added to the admin's Edit
+  Profile screen in `view.html`.
+
+### Excel export & import
+- Alongside CSV, the Dashboard now also offers **Export as Excel (.xlsx)**
+  (styled header row, auto-sized columns) and **Import from Excel**, using
+  the same field set as `register.html`.
+
+### Save & resume registration
+- `register.html` now auto-saves your progress (text/select/date fields) to
+  the browser's local storage as you type. If you leave and come back, a
+  banner offers to **Resume** or **Discard** the draft. Uploaded photos
+  can't be restored this way (browser security) and need re-selecting.
+
+### QR download
+- The QR code shown in a profile's detail modal now has a **Download QR**
+  button, saving it as `profile_<id>_qr.png`.
+
+
+
 ## Deploying to Render
 
 1. Push this folder to a GitHub repo.
@@ -100,3 +187,7 @@ Password).
 - Verification documents (Aadhar, passport — both numbers and photos) are
   visible to admins only in `view.html`, and are always excluded from the
   public QR/details view.
+- Passwords set at registration now power the registrant's own login at
+  `login.html` / `dashboard.html` — this is a completely separate session
+  from the admin login, so a registrant can never reach `admin.html` or
+  `view.html` with their own credentials.

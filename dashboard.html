@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Profile — Sindhi Samaj Surat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14161f; --indigo:#1b3a63; --maroon:#8b1e3f; --gold:#c9972b; --gold-soft:#e0b559;
+    --cream:#f6f0e4; --cream-soft:#fbf8f1; --line: rgba(201,151,43,0.35); --text-muted:#5a5648;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Mukta', sans-serif; color:var(--ink); background:var(--cream-soft);}
+  h1,h2,h3{font-family:'Cormorant Garamond', serif; font-weight:700;}
+  a{text-decoration:none; color:inherit;}
+
+  header{background:var(--ink); padding:14px 22px; position:sticky; top:0; z-index:50;}
+  .nav-wrap{max-width:900px; margin:0 auto; display:flex; align-items:center; justify-content:space-between;}
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand-mark{width:30px; height:30px; border-radius:50%; background:conic-gradient(from 45deg, var(--gold), var(--maroon), var(--indigo), var(--gold)); display:flex; align-items:center; justify-content:center; font-family:'Cormorant Garamond',serif; font-weight:700; color:var(--cream); font-size:0.85rem;}
+  .brand-text{color:var(--cream-soft); font-family:'Cormorant Garamond',serif; font-weight:700; font-size:1rem;}
+  .nav-right button{color:rgba(246,240,228,0.75); font-size:0.85rem; background:transparent; border:1px solid rgba(246,240,228,0.35); padding:7px 14px; border-radius:3px; cursor:pointer;}
+  .nav-right button:hover{color:var(--gold-soft); border-color:var(--gold-soft);}
+
+  .ajrak-strip{
+    height:8px; width:100%;
+    background-image:
+      linear-gradient(135deg, var(--gold) 25%, transparent 25%),
+      linear-gradient(225deg, var(--gold) 25%, transparent 25%),
+      linear-gradient(45deg, var(--gold) 25%, transparent 25%),
+      linear-gradient(315deg, var(--gold) 25%, var(--indigo) 25%);
+    background-position: 9px 0, 9px 0, 0 0, 0 0;
+    background-size: 18px 18px; background-repeat: repeat-x; background-color: var(--maroon);
+  }
+
+  main{max-width:900px; margin:0 auto; padding:30px 22px 80px;}
+
+  .status-card{
+    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    background:var(--cream); border:1px solid var(--line); border-left:4px solid var(--gold);
+    padding:20px 24px; border-radius:3px; margin-bottom:20px;
+  }
+  .status-badge{font-size:0.72rem; font-weight:700; padding:5px 14px; border-radius:20px; text-transform:uppercase; letter-spacing:0.04em;}
+  .status-badge.Pending{background:rgba(201,151,43,0.18); color:#8a6512;}
+  .status-badge.Active{background:rgba(27,58,99,0.14); color:var(--indigo);}
+  .status-badge.Rejected{background:rgba(139,30,63,0.12); color:var(--maroon);}
+  .status-badge.Inactive, .status-badge.Hold, .status-badge.Matched{background:rgba(90,86,72,0.14); color:var(--text-muted);}
+
+  .completeness-wrap{flex:1; min-width:220px;}
+  .completeness-label{font-size:0.78rem; color:var(--text-muted); margin-bottom:6px; display:flex; justify-content:space-between;}
+  .completeness-bar{height:10px; background:rgba(27,58,99,0.1); border-radius:6px; overflow:hidden;}
+  .completeness-fill{height:100%; background:linear-gradient(90deg, var(--gold), var(--maroon)); border-radius:6px; transition:width .4s ease;}
+
+  .save-banner{display:none; padding:12px 16px; border-radius:2px; font-size:0.86rem; margin-bottom:18px;}
+  .save-banner.show{display:block;}
+  .save-banner.ok{background:rgba(27,58,99,0.1); color:var(--indigo); border:1px solid rgba(27,58,99,0.2);}
+  .save-banner.err{background:rgba(139,30,63,0.1); color:var(--maroon); border:1px solid rgba(139,30,63,0.2);}
+
+  .photo-section{background:var(--cream); border:1px solid var(--line); border-radius:3px; padding:22px 24px; margin-bottom:18px;}
+  .photo-section h2{font-size:1.1rem; color:var(--indigo); margin-bottom:6px;}
+  .photo-section .desc{font-size:0.82rem; color:var(--text-muted); margin-bottom:14px;}
+  .photo-grid{display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
+  .photo-item{position:relative; width:100px; cursor:grab;}
+  .photo-item.dragging{opacity:0.4;}
+  .photo-item img{width:100px; height:125px; object-fit:cover; border-radius:3px; border:2px solid var(--line); display:block;}
+  .photo-item.is-primary img{border-color:var(--gold);}
+  .photo-item .badge{position:absolute; top:4px; left:4px; background:var(--gold); color:var(--ink); font-size:0.62rem; font-weight:700; padding:2px 6px; border-radius:10px;}
+  .photo-item .pactions{display:flex; gap:4px; margin-top:4px;}
+  .photo-item .pactions button{flex:1; font-size:0.66rem; padding:3px 4px; border-radius:2px; cursor:pointer; border:1px solid var(--line); background:#fff;}
+  .photo-item .pdel{color:var(--maroon); border-color:var(--maroon);}
+  .photo-item .pstar{color:var(--gold);}
+
+  .msection{background:var(--cream); border:1px solid var(--line); border-radius:3px; padding:22px 24px; margin-bottom:18px;}
+  .msection h2{font-size:1.1rem; color:var(--indigo); margin-bottom:14px; border-bottom:1px solid var(--line); padding-bottom:8px;}
+  .mgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px;}
+  .mfield .l{color:var(--text-muted); font-size:0.74rem; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px; display:block;}
+  .mfield input, .mfield select, .mfield textarea{
+    width:100%; padding:9px 10px; font-size:0.88rem; font-family:'Mukta',sans-serif;
+    border:1px solid rgba(27,58,99,0.25); border-radius:2px; background:#fff; color:var(--ink);
+  }
+  .mfield textarea{min-height:60px; resize:vertical;}
+
+  .save-bar{position:sticky; bottom:0; background:var(--cream-soft); border-top:1px solid var(--line); padding:16px 0; display:flex; gap:12px; justify-content:flex-end;}
+  .btn{display:inline-flex; align-items:center; gap:8px; padding:12px 26px; border-radius:3px; font-weight:700; font-size:0.9rem; cursor:pointer; border:none;}
+  .btn-gold{background:var(--gold); color:var(--ink);}
+  .btn-gold:hover{background:var(--gold-soft);}
+  .btn-outline{background:transparent; border:1px solid var(--indigo); color:var(--indigo);}
+
+  .password-row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+  .password-row input{padding:10px 12px; border:1px solid rgba(27,58,99,0.25); border-radius:2px; font-size:0.88rem; flex:1; min-width:180px;}
+
+  @media (max-width:700px){ .mgrid{grid-template-columns:1fr 1fr;} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav-wrap">
+    <div class="brand"><div class="brand-mark">S</div><div class="brand-text">My Profile</div></div>
+    <div class="nav-right"><button id="signOutBtn">Sign Out</button></div>
+  </div>
+</header>
+<div class="ajrak-strip"></div>
+
+<main>
+  <div class="status-card">
+    <div>
+      <h1 style="font-size:1.4rem; color:var(--indigo); margin-bottom:6px;" id="welcomeName">Welcome</h1>
+      <span class="status-badge" id="statusBadge">—</span>
+    </div>
+    <div class="completeness-wrap">
+      <div class="completeness-label"><span>Profile completeness</span><span id="completenessPct">0%</span></div>
+      <div class="completeness-bar"><div class="completeness-fill" id="completenessFill" style="width:0%;"></div></div>
+    </div>
+  </div>
+
+  <div class="save-banner" id="saveBanner"></div>
+
+  <div class="photo-section">
+    <h2>Photos</h2>
+    <div class="desc">Drag photos to reorder them. The first photo is your main display photo. Any change here also sends your profile back for bureau review.</div>
+    <div class="photo-grid" id="photoGrid"></div>
+    <input type="file" id="addPhotoInput" accept="image/*" multiple>
+  </div>
+
+  <form id="profileForm"></form>
+
+  <div class="photo-section">
+    <h2>Change Password</h2>
+    <div class="password-row">
+      <input type="password" id="curPass" placeholder="Current password">
+      <input type="password" id="newPass" placeholder="New password (min 6 chars)">
+      <button class="btn btn-outline" id="changePassBtn" type="button">Update</button>
+    </div>
+    <div class="save-banner" id="passBanner"></div>
+  </div>
+
+  <div class="save-bar">
+    <button class="btn btn-gold" id="saveBtn">Save Changes</button>
+  </div>
+</main>
+
+<script>
+  const FIELD_LABELS = {
+    full_name:"Full Name", gender:"Gender", profile_for:"Registering For",
+    father_name:"Father's Name", mother_name:"Mother's Name", guardian_name:"Guardian's Name",
+    dob:"Date of Birth", time_of_birth:"Time of Birth", place_of_birth:"Place of Birth",
+    age:"Age", height:"Height", weight:"Weight", blood_group:"Blood Group", complexion:"Complexion",
+    body_type:"Body Type", nationality:"Nationality", religion:"Religion", community:"Community",
+    sindhi_caste:"Sindhi Caste", sub_caste:"Sub Caste", mother_tongue:"Mother Tongue",
+    marital_status:"Marital Status", children:"Children",
+    occupation:"Occupation", career:"Career", company:"Company", business:"Business",
+    designation:"Designation", income_monthly:"Income (Monthly)", income_yearly:"Income (Yearly)",
+    qualification:"Qualification", college:"College", university:"University",
+    current_city:"Current City", native_place:"Native Place", phone:"Phone", alternate_phone:"Alternate Phone",
+    email:"Email", whatsapp:"WhatsApp", emergency_contact:"Emergency Contact",
+    permanent_address:"Permanent Address", temporary_address:"Temporary Address",
+    food_preference:"Food Preference", smoking:"Smoking", drinking:"Drinking", habits:"Habits",
+    hobbies:"Hobbies", interests:"Interests", languages_known:"Languages Known", about_yourself:"About",
+    expected_age:"Expected Age", expected_height:"Expected Height", expected_education:"Expected Education",
+    expected_profession:"Expected Profession", expected_income:"Expected Income",
+    expected_location:"Expected Location", expected_lifestyle:"Expected Lifestyle",
+    manglik:"Manglik", rashi:"Rashi", nakshatra:"Nakshatra", mulank:"Mulank",
+    kundli_available:"Kundli Available", birth_chart:"Birth Chart", horoscope_notes:"Horoscope Notes",
+    disability:"Disability", special_notes:"Special Notes",
+    aadhar_number:"Aadhar Number", passport_number:"Passport Number",
+  };
+
+  const SECTIONS = [
+    ["Identity", ["full_name","gender","profile_for"]],
+    ["Basic Information", ["father_name","mother_name","guardian_name","dob","time_of_birth","place_of_birth","age","height","weight","blood_group","complexion","body_type","nationality","religion","community","sindhi_caste","sub_caste","mother_tongue"]],
+    ["Marital Status", ["marital_status","children"]],
+    ["Occupation & Career", ["occupation","career","company","business","designation","income_monthly","income_yearly"]],
+    ["Education", ["qualification","college","university"]],
+    ["Address & Contact", ["current_city","native_place","phone","alternate_phone","email","whatsapp","emergency_contact","permanent_address","temporary_address"]],
+    ["Lifestyle", ["food_preference","smoking","drinking","habits","hobbies","interests","languages_known","about_yourself"]],
+    ["Partner Preference", ["expected_age","expected_height","expected_education","expected_profession","expected_income","expected_location","expected_lifestyle"]],
+    ["Astrological Details", ["manglik","rashi","nakshatra","mulank","kundli_available","birth_chart","horoscope_notes"]],
+    ["Medical Information", ["disability","special_notes"]],
+    ["Verification", ["aadhar_number","passport_number"]],
+  ];
+
+  const SELECT_FIELDS = {
+    gender: ["Male","Female"],
+    profile_for: ["Bride","Groom"],
+    marital_status: ["Single","Widow","Widower","Divorced","Separated"],
+    smoking: ["No","Yes","Occasionally"],
+    drinking: ["No","Yes","Occasionally"],
+    manglik: ["Yes","No","Partial"],
+  };
+  const TEXTAREA_FIELDS = new Set(["about_yourself","horoscope_notes","special_notes","permanent_address","temporary_address"]);
+
+  let currentProfile = null;
+
+  function showBanner(el, text, ok){
+    el.textContent = text;
+    el.className = 'save-banner show ' + (ok ? 'ok' : 'err');
+  }
+
+  async function loadProfile(){
+    const res = await fetch('/api/my-profile');
+    if (res.status === 401){ window.location.href = 'login.html'; return; }
+    const d = await res.json();
+    if (!d.success) return;
+    currentProfile = d.profile;
+    renderStatus(currentProfile);
+    renderPhotos(currentProfile);
+    renderForm(currentProfile);
+  }
+
+  function renderStatus(p){
+    document.getElementById('welcomeName').textContent = 'Welcome, ' + (p.full_name || 'there');
+    const badge = document.getElementById('statusBadge');
+    badge.textContent = p.status || 'Active';
+    badge.className = 'status-badge ' + (p.status || 'Active');
+    document.getElementById('completenessPct').textContent = (p.completeness || 0) + '%';
+    document.getElementById('completenessFill').style.width = (p.completeness || 0) + '%';
+  }
+
+  function renderPhotos(p){
+    const grid = document.getElementById('photoGrid');
+    grid.innerHTML = '';
+    (p.photo_list || []).forEach(ph => {
+      const item = document.createElement('div');
+      item.className = 'photo-item' + (ph.is_primary ? ' is-primary' : '');
+      item.draggable = true;
+      item.dataset.id = ph.id;
+      item.innerHTML = `
+        ${ph.is_primary ? '<span class="badge">Main</span>' : ''}
+        <img src="${ph.url}">
+        <div class="pactions">
+          ${ph.is_primary ? '' : '<button type="button" class="pstar" data-action="primary">Set Main</button>'}
+          <button type="button" class="pdel" data-action="delete">Delete</button>
+        </div>`;
+      grid.appendChild(item);
+    });
+    wireDragAndDrop(grid);
+    grid.querySelectorAll('[data-action="delete"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.closest('.photo-item').dataset.id;
+        if (!confirm('Delete this photo?')) return;
+        await fetch('/api/my-photo/' + id, {method:'DELETE'});
+        loadProfile();
+      });
+    });
+    grid.querySelectorAll('[data-action="primary"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.closest('.photo-item').dataset.id;
+        await fetch('/api/my-photo/' + id + '/primary', {method:'POST'});
+        loadProfile();
+      });
+    });
+  }
+
+  function wireDragAndDrop(grid){
+    let dragEl = null;
+    grid.querySelectorAll('.photo-item').forEach(item => {
+      item.addEventListener('dragstart', () => { dragEl = item; item.classList.add('dragging'); });
+      item.addEventListener('dragend', async () => {
+        item.classList.remove('dragging');
+        const newOrder = Array.from(grid.children).map(el => el.dataset.id);
+        await fetch('/api/photos/reorder', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({profile_id: currentProfile.id, order: newOrder})
+        });
+      });
+      item.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (!dragEl || dragEl === item) return;
+        const items = Array.from(grid.children);
+        const dragIdx = items.indexOf(dragEl);
+        const targetIdx = items.indexOf(item);
+        if (dragIdx < targetIdx) grid.insertBefore(dragEl, item.nextSibling);
+        else grid.insertBefore(dragEl, item);
+      });
+    });
+  }
+
+  document.getElementById('addPhotoInput').addEventListener('change', async (e) => {
+    const files = e.target.files;
+    if (!files.length) return;
+    const fd = new FormData();
+    for (const f of files) fd.append('photos', f);
+    await fetch('/api/my-profile/photos', {method:'POST', body: fd});
+    e.target.value = '';
+    loadProfile();
+  });
+
+  function renderForm(p){
+    const form = document.getElementById('profileForm');
+    form.innerHTML = '';
+    SECTIONS.forEach(([title, fields]) => {
+      const sec = document.createElement('div');
+      sec.className = 'msection';
+      const grid = fields.map(f => {
+        const label = FIELD_LABELS[f] || f;
+        const val = (p[f] === null || p[f] === undefined) ? '' : p[f];
+        let input;
+        if (SELECT_FIELDS[f]){
+          const opts = SELECT_FIELDS[f].map(o => `<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('');
+          input = `<select data-field="${f}"><option value="">—</option>${opts}</select>`;
+        } else if (TEXTAREA_FIELDS.has(f)){
+          input = `<textarea data-field="${f}">${val}</textarea>`;
+        } else if (f === 'dob'){
+          input = `<input type="date" data-field="${f}" value="${val}">`;
+        } else {
+          input = `<input type="text" data-field="${f}" value="${(val+'').replace(/"/g,'&quot;')}">`;
+        }
+        return `<div class="mfield"><span class="l">${label}</span>${input}</div>`;
+      }).join('');
+      sec.innerHTML = `<h2>${title}</h2><div class="mgrid">${grid}</div>`;
+      form.appendChild(sec);
+    });
+  }
+
+  document.getElementById('saveBtn').addEventListener('click', async () => {
+    const updates = {};
+    document.querySelectorAll('#profileForm [data-field]').forEach(el => {
+      updates[el.dataset.field] = el.value;
+    });
+    const banner = document.getElementById('saveBanner');
+    try {
+      const res = await fetch('/api/my-profile', {
+        method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(updates)
+      });
+      const d = await res.json();
+      showBanner(banner, d.message || (d.success ? 'Saved.' : 'Failed to save.'), d.success);
+      if (d.success) loadProfile();
+    } catch (e){
+      showBanner(banner, 'Could not reach server.', false);
+    }
+  });
+
+  document.getElementById('changePassBtn').addEventListener('click', async () => {
+    const cur = document.getElementById('curPass').value;
+    const nw = document.getElementById('newPass').value;
+    const banner = document.getElementById('passBanner');
+    try {
+      const res = await fetch('/api/my-profile/password', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({current_password: cur, new_password: nw})
+      });
+      const d = await res.json();
+      showBanner(banner, d.message || (d.success ? 'Password updated.' : 'Failed.'), d.success);
+      if (d.success){ document.getElementById('curPass').value=''; document.getElementById('newPass').value=''; }
+    } catch (e){
+      showBanner(banner, 'Could not reach server.', false);
+    }
+  });
+
+  document.getElementById('signOutBtn').addEventListener('click', async () => {
+    await fetch('/user-logout', {method:'POST'});
+    window.location.href = 'login.html';
+  });
+
+  loadProfile();
+</script>
+</body>
+</html>

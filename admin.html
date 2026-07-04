@@ -81,6 +81,21 @@
   .msg.ok{background:rgba(27,58,99,0.1); color:var(--indigo);}
   .msg.err{background:rgba(139,30,63,0.1); color:var(--maroon);}
 
+  .pending-item{
+    display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+    padding:12px 16px; background:var(--cream-soft); border:1px solid var(--line); border-radius:2px;
+  }
+  .pending-item .pinfo{font-size:0.9rem;}
+  .pending-item .pinfo strong{color:var(--indigo);}
+  .pending-item .pinfo span{color:var(--text-muted); font-size:0.8rem; margin-left:8px;}
+  .pending-item .pactions{display:flex; gap:8px;}
+  .pending-item .pactions button{padding:8px 16px; border-radius:3px; font-size:0.8rem; font-weight:600; cursor:pointer; border:none;}
+  .pending-item .p-approve{background:var(--gold); color:var(--ink);}
+  .pending-item .p-approve:hover{background:var(--gold-soft);}
+  .pending-item .p-reject{background:transparent; border:1px solid var(--maroon); color:var(--maroon);}
+  .pending-item .p-reject:hover{background:rgba(139,30,63,0.08);}
+  .pending-empty{color:var(--text-muted); font-size:0.86rem; padding:8px 0;}
+
   @media (max-width:900px){
     .stats-grid{grid-template-columns:1fr 1fr;}
     .panels{grid-template-columns:1fr;}
@@ -103,31 +118,47 @@
 <main>
   <div class="page-head">
     <h1>Dashboard</h1>
-    <a href="view.html" class="view-btn">&#128065; View Profiles (Walk-in Mode)</a>
+    <div class="row" style="gap:12px;">
+      <a href="reports.html" class="btn-outline" style="padding:12px 22px; border-radius:3px; font-weight:600;">📊 Reports</a>
+      <a href="matches.html" class="btn-outline" style="padding:12px 22px; border-radius:3px; font-weight:600;">💞 Matches</a>
+      <a href="view.html" class="view-btn">&#128065; View Profiles (Walk-in Mode)</a>
+    </div>
   </div>
 
   <div class="stats-grid">
     <div class="stat-card"><div class="n" id="statTotal">—</div><div class="l">Total Profiles</div></div>
+    <div class="stat-card"><div class="n" id="statPending">—</div><div class="l">Pending Approval</div></div>
     <div class="stat-card"><div class="n" id="statBrides">—</div><div class="l">Bride Profiles</div></div>
     <div class="stat-card"><div class="n" id="statGrooms">—</div><div class="l">Groom Profiles</div></div>
     <div class="stat-card"><div class="n" id="statActive">—</div><div class="l">Active Profiles</div></div>
   </div>
 
+  <div class="panel" id="pendingPanel" style="margin-bottom:22px; border-left-color: var(--gold);">
+    <h2>Pending Approvals</h2>
+    <p class="desc">New self-registrations wait here until you review and approve them — they won't appear in Walk-in View until approved.</p>
+    <div id="pendingList" style="display:flex; flex-direction:column; gap:10px;"></div>
+  </div>
+
   <div class="panels">
     <div class="panel">
-      <h2>CSV Export</h2>
-      <p class="desc">Download all profile data in the exact register.html field format as a CSV file.</p>
+      <h2>Export Profiles</h2>
+      <p class="desc">Download all profile data in the exact register.html field format.</p>
       <div class="row">
-        <a href="/export/csv" class="btn btn-gold">Export All Profiles (CSV)</a>
+        <a href="/export/csv" class="btn btn-gold">Export CSV</a>
+        <a href="/export/xlsx" class="btn btn-gold">Export Excel (.xlsx)</a>
       </div>
     </div>
 
     <div class="panel">
-      <h2>CSV Import</h2>
-      <p class="desc">Bulk-add profiles from a CSV file using the same field format.</p>
-      <div class="row">
+      <h2>Import Profiles</h2>
+      <p class="desc">Bulk-add profiles from a CSV or Excel file using the same field format.</p>
+      <div class="row" style="margin-bottom:10px;">
         <input type="file" id="csvFile" accept=".csv">
-        <button class="btn btn-outline" id="importBtn">Import</button>
+        <button class="btn btn-outline" id="importBtn">Import CSV</button>
+      </div>
+      <div class="row">
+        <input type="file" id="xlsxFile" accept=".xlsx,.xlsm">
+        <button class="btn btn-outline" id="importXlsxBtn">Import Excel</button>
       </div>
       <div class="msg" id="importMsg"></div>
     </div>
@@ -190,10 +221,42 @@
     const d = await res.json();
     if (d.success){
       document.getElementById('statTotal').textContent = d.total;
+      document.getElementById('statPending').textContent = d.pending;
       document.getElementById('statBrides').textContent = d.brides;
       document.getElementById('statGrooms').textContent = d.grooms;
       document.getElementById('statActive').textContent = d.active;
     }
+  }
+
+  async function loadPending(){
+    const list = document.getElementById('pendingList');
+    const res = await fetch('/api/profiles?status=Pending');
+    const d = await res.json();
+    if (!d.success || d.count === 0){
+      list.innerHTML = '<div class="pending-empty">No profiles waiting for approval.</div>';
+      return;
+    }
+    list.innerHTML = '';
+    d.profiles.forEach(p => {
+      const row = document.createElement('div');
+      row.className = 'pending-item';
+      row.innerHTML = `
+        <div class="pinfo"><strong>${p.full_name || 'Unnamed'}</strong><span>${p.profile_for || '—'} · ${p.age || '—'} yrs · ${p.current_city || '—'} · ${p.phone || '—'}</span></div>
+        <div class="pactions">
+          <button class="p-approve" data-id="${p.id}" data-action="approve">Approve</button>
+          <button class="p-reject" data-id="${p.id}" data-action="reject">Reject</button>
+        </div>`;
+      list.appendChild(row);
+    });
+    list.querySelectorAll('button[data-action]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const action = btn.dataset.action;
+        await fetch(`/api/profile/${id}/${action}`, {method:'POST'});
+        loadPending();
+        loadStats();
+      });
+    });
   }
   document.getElementById('signOutBtn').addEventListener('click', async () => {
     await fetch('/signout', {method:'POST'});
@@ -212,6 +275,19 @@
     const fd = new FormData(); fd.append('file', f);
     try {
       const res = await fetch('/import/csv', {method:'POST', body:fd});
+      const d = await res.json();
+      if (d.success){ showMsg(el, `Imported ${d.inserted} profiles.`, true); loadStats(); }
+      else showMsg(el, d.message || 'Import failed.', false);
+    } catch(e){ showMsg(el, 'Could not reach server.', false); }
+  });
+
+  document.getElementById('importXlsxBtn').addEventListener('click', async () => {
+    const f = document.getElementById('xlsxFile').files[0];
+    const el = document.getElementById('importMsg');
+    if (!f){ showMsg(el, 'Choose an Excel file first.', false); return; }
+    const fd = new FormData(); fd.append('file', f);
+    try {
+      const res = await fetch('/import/xlsx', {method:'POST', body:fd});
       const d = await res.json();
       if (d.success){ showMsg(el, `Imported ${d.inserted} profiles.`, true); loadStats(); }
       else showMsg(el, d.message || 'Import failed.', false);
@@ -264,6 +340,7 @@
 
   loadMe();
   loadStats();
+  loadPending();
 </script>
 </body>
 </html>

@@ -90,6 +90,11 @@
   .p-photo img{width:100%; height:100%; object-fit:cover; display:block;}
   .p-photo .noimg{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:rgba(246,240,228,0.5); font-family:'Cormorant Garamond',serif; font-size:2.6rem;}
   .p-tag{position:absolute; top:10px; left:10px; background:rgba(20,22,31,0.65); color:var(--gold-soft); font-size:0.7rem; font-weight:700; padding:4px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.05em;}
+  .p-tag.pending{background:rgba(201,151,43,0.85); color:var(--ink);}
+  .p-check{position:absolute; top:10px; right:10px; width:24px; height:24px; border-radius:5px; background:rgba(20,22,31,0.55); display:none; align-items:center; justify-content:center; cursor:pointer;}
+  .p-card.compare-mode .p-check{display:flex;}
+  .p-check.checked{background:var(--gold);}
+  .p-card.compare-selected{outline:3px solid var(--gold);}
   .p-body{padding:14px 16px 16px;}
   .p-body h3{font-size:1.1rem; color:var(--ink); margin-bottom:4px;}
   .p-body .meta{font-size:0.82rem; color:var(--text-muted); display:flex; flex-direction:column; gap:2px;}
@@ -268,7 +273,7 @@
     <details class="fgroup">
       <summary>Status</summary>
       <div class="fgroup-body">
-        <select id="f_status"><option value="">Status — Any</option><option>Active</option><option>Inactive</option><option>Matched</option><option>Hold</option></select>
+        <select id="f_status"><option value="">Status — Any</option><option>Pending</option><option>Active</option><option>Inactive</option><option>Matched</option><option>Hold</option><option>Rejected</option></select>
       </div>
     </details>
 
@@ -281,7 +286,17 @@
   <section class="results">
     <div class="results-head">
       <h1>Profiles</h1>
-      <div class="count-pill" id="countPill">Loading…</div>
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <button id="compareModeBtn" class="btn-small btn-clear" style="padding:8px 16px; flex:none;">Compare Mode: Off</button>
+        <div class="count-pill" id="countPill">Loading…</div>
+      </div>
+    </div>
+    <div id="compareBar" style="display:none; align-items:center; justify-content:space-between; gap:12px; background:var(--indigo); color:#fff; padding:12px 18px; border-radius:3px; margin-bottom:16px; flex-wrap:wrap;">
+      <span id="compareBarText">Select 2 profiles to compare</span>
+      <div style="display:flex; gap:10px;">
+        <button id="compareGoBtn" class="btn btn-gold" style="padding:9px 18px;" disabled>Compare Selected</button>
+        <button id="compareClearBtn" class="btn btn-outline" style="padding:9px 18px; border-color:rgba(255,255,255,0.5); color:#fff;">Clear</button>
+      </div>
     </div>
     <div class="card-grid" id="cardGrid"></div>
   </section>
@@ -298,10 +313,19 @@
       <button class="modal-close" id="modalCloseBtn">&times;</button>
     </div>
     <div class="modal-gallery" id="modalGallery"></div>
+    <div id="pendingBanner" style="display:none; margin:0 26px 16px; padding:12px 16px; background:rgba(201,151,43,0.14); border:1px solid var(--line); border-radius:2px; font-size:0.86rem; color:var(--indigo); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <span>⏳ This profile is awaiting approval and is hidden from Walk-in View until reviewed.</span>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-gold" id="btnApprove" style="padding:8px 16px;">Approve</button>
+        <button class="btn btn-danger" id="btnReject" style="padding:8px 16px;">Reject</button>
+      </div>
+    </div>
     <div class="modal-body" id="modalBody"></div>
     <div class="modal-actions" id="viewActions">
       <a class="btn btn-gold" id="btnPdf" target="_blank">Download Biodata (PDF)</a>
       <a class="btn btn-outline" id="btnPng" target="_blank">Download Biodata (PNG)</a>
+      <button class="btn btn-outline" id="btnKundli">View Kundli PDF</button>
+      <button class="btn btn-outline" id="btnSuggest">Suggest Matches</button>
       <button class="btn btn-outline" id="btnEdit">Edit Profile</button>
       <button class="btn btn-danger" id="btnDelete">Delete Profile</button>
     </div>
@@ -314,8 +338,42 @@
       <div class="qtext">
         <h4>Scan for user view</h4>
         <p>This QR opens a read-only version of this profile — no admin functions, no verification documents. Safe to show or print for walk-in visitors.</p>
+        <a id="qrDownloadBtn" class="btn btn-outline" style="margin-top:10px; padding:7px 16px; font-size:0.8rem;" download>Download QR</a>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Kundli Viewer Modal -->
+<div class="modal-overlay" id="kundliOverlay">
+  <div class="modal" style="max-width:820px;">
+    <div class="modal-head">
+      <div><h2>Kundli / Horoscope PDF</h2></div>
+      <button class="modal-close" id="kundliCloseBtn">&times;</button>
+    </div>
+    <iframe id="kundliFrame" src="" style="width:100%; height:75vh; border:none; background:#fff;"></iframe>
+  </div>
+</div>
+
+<!-- Suggested Matches Modal -->
+<div class="modal-overlay" id="suggestOverlay">
+  <div class="modal" style="max-width:960px;">
+    <div class="modal-head">
+      <div><h2>Suggested Matches</h2><div class="sub" id="suggestSub">—</div></div>
+      <button class="modal-close" id="suggestCloseBtn">&times;</button>
+    </div>
+    <div class="modal-body" id="suggestBody" style="padding-top:20px;"></div>
+  </div>
+</div>
+
+<!-- Compare Modal -->
+<div class="modal-overlay" id="compareOverlay">
+  <div class="modal" style="max-width:1080px;">
+    <div class="modal-head">
+      <div><h2>Compare Profiles</h2></div>
+      <button class="modal-close" id="compareCloseBtn">&times;</button>
+    </div>
+    <div class="modal-body" id="compareBody" style="padding-top:20px;"></div>
   </div>
 </div>
 
@@ -348,7 +406,8 @@
     manglik:"Manglik", rashi:"Rashi", nakshatra:"Nakshatra", mulank:"Mulank",
     kundli_available:"Kundli Available", birth_chart:"Birth Chart", horoscope_notes:"Horoscope Notes",
     disability:"Disability", special_notes:"Special Notes",
-    aadhar_number:"Aadhar Number", passport_number:"Passport Number", status:"Status"
+    aadhar_number:"Aadhar Number", passport_number:"Passport Number", status:"Status",
+    admin_notes:"Admin Notes"
   };
 
   const SECTIONS = [
@@ -363,6 +422,7 @@
     ["Astrological Details", ["manglik","rashi","nakshatra","mulank","kundli_available","birth_chart","horoscope_notes"]],
     ["Medical Information", ["disability","special_notes"]],
     ["Verification (Admin Only)", ["aadhar_number","passport_number","status"]],
+    ["Admin Notes (Private)", ["admin_notes"]],
   ];
 
   const SELECT_FIELDS = {
@@ -372,9 +432,9 @@
     smoking: ["No","Yes","Occasionally"],
     drinking: ["No","Yes","Occasionally"],
     manglik: ["Yes","No","Partial"],
-    status: ["Active","Inactive","Matched","Hold"],
+    status: ["Pending","Active","Inactive","Matched","Hold","Rejected"],
   };
-  const TEXTAREA_FIELDS = new Set(["about_yourself","horoscope_notes","special_notes","permanent_address","temporary_address"]);
+  const TEXTAREA_FIELDS = new Set(["about_yourself","horoscope_notes","special_notes","permanent_address","temporary_address","admin_notes"]);
   const EDITABLE_FIELDS = new Set(SECTIONS.flatMap(([, fields]) => fields));
 
   let currentProfileId = null;
@@ -454,16 +514,22 @@
     d.profiles.forEach(p => grid.appendChild(renderCard(p)));
   }
 
+  let compareMode = false;
+  let compareSelection = [];
+
   function renderCard(p){
     const el = document.createElement('div');
-    el.className = 'p-card';
-    el.addEventListener('click', () => openModal(p.id));
+    el.className = 'p-card' + (compareMode ? ' compare-mode' : '');
+    el.dataset.id = p.id;
     const photoHtml = p.primary_photo
       ? `<img src="${p.primary_photo}" alt="${p.full_name||''}">`
       : `<div class="noimg">${(p.full_name||'?').charAt(0).toUpperCase()}</div>`;
+    const tagClass = p.status === 'Pending' ? 'p-tag pending' : 'p-tag';
+    const tagText = p.status === 'Pending' ? 'Pending' : (p.profile_for || '—');
     el.innerHTML = `
       <div class="p-photo">
-        <span class="p-tag">${p.profile_for || '—'}</span>
+        <span class="${tagClass}">${tagText}</span>
+        <span class="p-check" data-check="${p.id}">✓</span>
         ${photoHtml}
       </div>
       <div class="p-body">
@@ -474,8 +540,157 @@
           <span>&#128205; ${p.current_city || '—'}</span>
         </div>
       </div>`;
+    el.addEventListener('click', (e) => {
+      if (compareMode){
+        toggleCompareSelect(p.id, el);
+      } else {
+        openModal(p.id);
+      }
+    });
+    if (compareSelection.includes(p.id)) el.classList.add('compare-selected');
     return el;
   }
+
+  function toggleCompareSelect(id, el){
+    const idx = compareSelection.indexOf(id);
+    if (idx >= 0){
+      compareSelection.splice(idx, 1);
+      el.classList.remove('compare-selected');
+    } else {
+      if (compareSelection.length >= 2){
+        alert('You can compare 2 profiles at a time. Clear your selection to pick different ones.');
+        return;
+      }
+      compareSelection.push(id);
+      el.classList.add('compare-selected');
+    }
+    updateCompareBar();
+  }
+
+  function updateCompareBar(){
+    const text = document.getElementById('compareBarText');
+    const goBtn = document.getElementById('compareGoBtn');
+    if (compareSelection.length === 0) text.textContent = 'Select 2 profiles to compare';
+    else if (compareSelection.length === 1) text.textContent = '1 selected — choose 1 more';
+    else text.textContent = '2 selected — ready to compare';
+    goBtn.disabled = compareSelection.length !== 2;
+  }
+
+  document.getElementById('compareModeBtn').addEventListener('click', () => {
+    compareMode = !compareMode;
+    compareSelection = [];
+    document.getElementById('compareModeBtn').textContent = 'Compare Mode: ' + (compareMode ? 'On' : 'Off');
+    document.getElementById('compareBar').style.display = compareMode ? 'flex' : 'none';
+    updateCompareBar();
+    loadProfiles();
+  });
+
+  document.getElementById('compareClearBtn').addEventListener('click', () => {
+    compareSelection = [];
+    updateCompareBar();
+    loadProfiles();
+  });
+
+  document.getElementById('compareGoBtn').addEventListener('click', () => {
+    if (compareSelection.length === 2) openCompareModal(compareSelection[0], compareSelection[1]);
+  });
+
+  async function openCompareModal(idA, idB){
+    const [resA, resB] = await Promise.all([fetch('/api/profile/' + idA), fetch('/api/profile/' + idB)]);
+    const a = (await resA.json()).profile;
+    const b = (await resB.json()).profile;
+    const body = document.getElementById('compareBody');
+
+    const compareFields = SECTIONS.filter(([t]) => t !== 'Verification (Admin Only)' && t !== 'Admin Notes (Private)')
+      .flatMap(([, fields]) => fields);
+
+    const photoRow = `
+      <div style="display:flex; gap:40px; justify-content:center; margin-bottom:24px;">
+        <div style="text-align:center;">
+          <img src="${a.primary_photo || ''}" style="width:140px; height:170px; object-fit:cover; border-radius:4px; border:2px solid var(--gold); background:linear-gradient(135deg,var(--indigo),var(--maroon));">
+          <h3 style="margin-top:10px; color:var(--indigo);">${a.full_name || 'Unnamed'}</h3>
+        </div>
+        <div style="text-align:center;">
+          <img src="${b.primary_photo || ''}" style="width:140px; height:170px; object-fit:cover; border-radius:4px; border:2px solid var(--gold); background:linear-gradient(135deg,var(--indigo),var(--maroon));">
+          <h3 style="margin-top:10px; color:var(--indigo);">${b.full_name || 'Unnamed'}</h3>
+        </div>
+      </div>`;
+
+    const rows = compareFields.map(f => {
+      const label = FIELD_LABELS[f] || f;
+      const va = (a[f] === null || a[f] === undefined || a[f] === '') ? '—' : a[f];
+      const vb = (b[f] === null || b[f] === undefined || b[f] === '') ? '—' : b[f];
+      const diff = va !== vb;
+      return `<tr>
+        <td style="padding:8px 12px; color:var(--text-muted); font-size:0.78rem; text-transform:uppercase; width:22%;">${label}</td>
+        <td style="padding:8px 12px; font-size:0.88rem; ${diff?'font-weight:600;':''}">${va}</td>
+        <td style="padding:8px 12px; font-size:0.88rem; ${diff?'font-weight:600;':''}">${vb}</td>
+      </tr>`;
+    }).join('');
+
+    const compatRes = await fetch(`/api/compatibility/${idA}/${idB}`);
+    const compat = await compatRes.json();
+
+    let compatHtml = '';
+    if (compat.success && compat.available) {
+      const factorRows = compat.factors.map(f =>
+        `<div style="flex:1; min-width:110px; text-align:center;">
+          <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase;">${f.name}</div>
+          <div style="font-size:1.1rem; font-weight:700; color:var(--indigo);">${f.score}/${f.max}</div>
+          <div style="font-size:0.7rem; color:var(--text-muted);">${f.note}</div>
+        </div>`
+      ).join('');
+      compatHtml = `
+        <div style="background:var(--cream); border:1px solid var(--line); border-radius:4px; padding:18px 20px; margin-bottom:22px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+            <h3 style="font-size:1rem; color:var(--maroon);">Horoscope Compatibility (approximate)</h3>
+            <div style="font-size:1.3rem; font-weight:700; color:var(--gold-soft, var(--gold));">${compat.total}/${compat.max_total} (${compat.percentage}%)</div>
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">${factorRows}</div>
+          <div style="font-size:0.82rem; color:${compat.manglik_ok===false?'var(--maroon)':'var(--text-muted)'}; margin-bottom:8px;">Manglik: ${compat.manglik_note}</div>
+          <div style="font-size:0.72rem; color:var(--text-muted); font-style:italic;">${compat.disclaimer}</div>
+        </div>`;
+    } else if (compat.success) {
+      compatHtml = `
+        <div style="background:var(--cream); border:1px solid var(--line); border-radius:4px; padding:16px 20px; margin-bottom:22px; font-size:0.85rem; color:var(--text-muted);">
+          Horoscope compatibility unavailable: ${compat.reason}
+        </div>`;
+    }
+
+    body.innerHTML = compatHtml + photoRow + `
+      <div style="max-height:55vh; overflow-y:auto; border:1px solid var(--line); border-radius:3px;">
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="background:var(--cream); position:sticky; top:0;">
+              <th style="padding:8px 12px; text-align:left; font-size:0.78rem; color:var(--indigo);">Field</th>
+              <th style="padding:8px 12px; text-align:left; font-size:0.85rem; color:var(--indigo);">${a.full_name || 'Profile A'}</th>
+              <th style="padding:8px 12px; text-align:left; font-size:0.85rem; color:var(--indigo);">${b.full_name || 'Profile B'}</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <div style="margin-top:18px; text-align:center;">
+        <button class="btn btn-gold" id="btnShortlistCompared">Shortlist This Pair as a Match</button>
+      </div>`;
+
+    document.getElementById('btnShortlistCompared').addEventListener('click', async () => {
+      const res = await fetch('/api/matches', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({profile_a_id: idA, profile_b_id: idB})
+      });
+      const d = await res.json();
+      alert(d.success ? 'Shortlisted! View it on the Matches page.' : (d.message || 'Could not shortlist.'));
+    });
+
+    document.getElementById('compareOverlay').classList.add('show');
+  }
+  document.getElementById('compareCloseBtn').addEventListener('click', () => {
+    document.getElementById('compareOverlay').classList.remove('show');
+  });
+  document.getElementById('compareOverlay').addEventListener('click', (e) => {
+    if (e.target.id === 'compareOverlay') document.getElementById('compareOverlay').classList.remove('show');
+  });
 
   async function openModal(id){
     currentProfileId = id;
@@ -489,9 +704,97 @@
     document.getElementById('btnPdf').href = `/biodata/${id}/pdf`;
     document.getElementById('btnPng').href = `/biodata/${id}/png`;
     document.getElementById('qrImg').src = `/api/profile/${id}/qr.png`;
+    const qrDl = document.getElementById('qrDownloadBtn');
+    qrDl.href = `/api/profile/${id}/qr.png`;
+    qrDl.download = `profile_${id}_qr.png`;
+
+    document.getElementById('pendingBanner').style.display =
+      currentProfileData.status === 'Pending' ? 'flex' : 'none';
+
+    const kundliBtn = document.getElementById('btnKundli');
+    kundliBtn.disabled = !currentProfileData.kundli_pdf_path;
+    kundliBtn.style.opacity = currentProfileData.kundli_pdf_path ? '1' : '0.5';
 
     document.getElementById('modalOverlay').classList.add('show');
   }
+
+  document.getElementById('btnApprove').addEventListener('click', async () => {
+    if (!currentProfileId) return;
+    await fetch(`/api/profile/${currentProfileId}/approve`, {method:'POST'});
+    document.getElementById('modalOverlay').classList.remove('show');
+    loadProfiles();
+  });
+  document.getElementById('btnReject').addEventListener('click', async () => {
+    if (!currentProfileId) return;
+    if (!confirm('Reject this registration? The profile will be marked Rejected.')) return;
+    await fetch(`/api/profile/${currentProfileId}/reject`, {method:'POST'});
+    document.getElementById('modalOverlay').classList.remove('show');
+    loadProfiles();
+  });
+
+  document.getElementById('btnKundli').addEventListener('click', () => {
+    if (!currentProfileData || !currentProfileData.kundli_pdf_path) return;
+    document.getElementById('kundliFrame').src = currentProfileData.kundli_pdf_path;
+    document.getElementById('kundliOverlay').classList.add('show');
+  });
+  document.getElementById('kundliCloseBtn').addEventListener('click', () => {
+    document.getElementById('kundliOverlay').classList.remove('show');
+    document.getElementById('kundliFrame').src = '';
+  });
+  document.getElementById('kundliOverlay').addEventListener('click', (e) => {
+    if (e.target.id === 'kundliOverlay'){
+      document.getElementById('kundliOverlay').classList.remove('show');
+      document.getElementById('kundliFrame').src = '';
+    }
+  });
+
+  document.getElementById('btnSuggest').addEventListener('click', async () => {
+    if (!currentProfileId || !currentProfileData) return;
+    document.getElementById('suggestSub').textContent =
+      `Based on ${currentProfileData.full_name || 'this profile'}'s details — age, city, caste & manglik proximity`;
+    const body = document.getElementById('suggestBody');
+    body.innerHTML = '<p style="color:var(--text-muted);">Finding suggestions…</p>';
+    document.getElementById('suggestOverlay').classList.add('show');
+
+    const res = await fetch(`/api/profile/${currentProfileId}/suggested-matches`);
+    const d = await res.json();
+    if (!d.success || !d.candidates.length){
+      body.innerHTML = '<p style="color:var(--text-muted);">No active opposite-gender profiles found to suggest yet.</p>';
+      return;
+    }
+    body.innerHTML = `<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:18px;">${
+      d.candidates.map(c => `
+        <div style="background:var(--cream); border:1px solid var(--line); border-radius:4px; overflow:hidden;">
+          <div style="aspect-ratio:3/4; background:linear-gradient(135deg,var(--indigo),var(--maroon)); position:relative;">
+            ${c.primary_photo ? `<img src="${c.primary_photo}" style="width:100%; height:100%; object-fit:cover;">` : ''}
+            <span style="position:absolute; top:8px; right:8px; background:var(--gold); color:var(--ink); font-size:0.7rem; font-weight:700; padding:3px 9px; border-radius:12px;">Score ${c.match_score}</span>
+          </div>
+          <div style="padding:12px 14px;">
+            <h3 style="font-size:1rem; color:var(--ink); margin-bottom:4px;">${c.full_name || 'Unnamed'}</h3>
+            <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:10px;">${c.age||'—'} yrs · ${c.current_city||'—'} · ${c.sindhi_caste||'—'}</div>
+            <button class="btn btn-gold" style="width:100%; padding:8px; font-size:0.8rem;" data-shortlist="${c.id}">Shortlist</button>
+          </div>
+        </div>`).join('')
+    }</div>`;
+
+    body.querySelectorAll('[data-shortlist]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const res2 = await fetch('/api/matches', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({profile_a_id: currentProfileId, profile_b_id: btn.dataset.shortlist})
+        });
+        const d2 = await res2.json();
+        btn.textContent = d2.success ? 'Shortlisted ✓' : (d2.message || 'Already shortlisted');
+        btn.disabled = true;
+      });
+    });
+  });
+  document.getElementById('suggestCloseBtn').addEventListener('click', () => {
+    document.getElementById('suggestOverlay').classList.remove('show');
+  });
+  document.getElementById('suggestOverlay').addEventListener('click', (e) => {
+    if (e.target.id === 'suggestOverlay') document.getElementById('suggestOverlay').classList.remove('show');
+  });
 
   function renderGallery(p){
     const gallery = document.getElementById('modalGallery');
@@ -545,6 +848,31 @@
     document.getElementById('editActions').style.display = 'none';
   }
 
+  function wireEditPhotoDrag(grid){
+    if (!grid) return;
+    let dragEl = null;
+    grid.querySelectorAll('.edit-photo-item').forEach(item => {
+      item.addEventListener('dragstart', () => { dragEl = item; item.style.opacity = '0.4'; });
+      item.addEventListener('dragend', async () => {
+        item.style.opacity = '1';
+        const newOrder = Array.from(grid.children).map(el => el.dataset.photoId);
+        await fetch('/api/photos/reorder', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({profile_id: currentProfileId, order: newOrder})
+        });
+      });
+      item.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (!dragEl || dragEl === item) return;
+        const items = Array.from(grid.children);
+        const dragIdx = items.indexOf(dragEl);
+        const targetIdx = items.indexOf(item);
+        if (dragIdx < targetIdx) grid.insertBefore(dragEl, item.nextSibling);
+        else grid.insertBefore(dragEl, item);
+      });
+    });
+  }
+
   function renderEditMode(p){
     const body = document.getElementById('modalBody');
     body.innerHTML = '';
@@ -552,7 +880,7 @@
     const photoRow = document.createElement('div');
     photoRow.className = 'edit-photo-row';
     const thumbs = (p.photo_list || []).map(ph => `
-      <div class="edit-photo-item ${ph.is_primary ? 'is-primary' : ''}" data-photo-id="${ph.id}">
+      <div class="edit-photo-item ${ph.is_primary ? 'is-primary' : ''}" draggable="true" data-photo-id="${ph.id}">
         ${ph.is_primary ? '<span class="ep-badge">Main</span>' : ''}
         <img src="${ph.url}">
         <div class="ep-actions">
@@ -561,11 +889,13 @@
         </div>
       </div>`).join('');
     photoRow.innerHTML = `
-      <label>Photos</label>
+      <label>Photos <span style="font-weight:400; color:var(--text-muted); font-size:0.78rem;">(drag to reorder)</span></label>
       <div class="edit-photo-grid" id="editPhotoGrid">${thumbs || '<span style="color:var(--text-muted); font-size:0.85rem;">No photos uploaded.</span>'}</div>
       <input type="file" id="editPhotoInput" accept="image/*" multiple>
       <div style="font-size:0.78rem; color:var(--text-muted); margin-top:6px;">Select one or more files to add more photos.</div>`;
     body.appendChild(photoRow);
+
+    wireEditPhotoDrag(document.getElementById('editPhotoGrid'));
 
     photoRow.querySelectorAll('[data-action="delete"]').forEach(btn => {
       btn.addEventListener('click', async () => {
