@@ -158,6 +158,7 @@
     <a href="#sec-medical">Medical</a>
     <a href="#sec-verify">Verification</a>
     <a href="#sec-photos">Photos</a>
+    <a href="#sec-reference">Reference</a>
     <a href="#sec-account">Account</a>
   </div>
 </nav>
@@ -391,6 +392,28 @@
           <label for="photos">Profile Photos</label>
           <input type="file" id="photos" name="photos" accept="image/*" multiple>
           <div class="file-note">JPG, PNG or WEBP. You can select multiple files at once. Max 10 MB each.</div>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset id="sec-reference">
+      <legend>Reference</legend>
+      <span class="legend-note">If someone else (a parent, relative, or friend) is filling out this form on behalf of the candidate, please tell us who.</span>
+      <div class="grid3">
+        <div class="field"><label for="reference_name">Filling this form on behalf of someone? Enter their name</label><input type="text" id="reference_name" name="reference_name" placeholder="Leave blank if filling for yourself"></div>
+        <div class="field">
+          <label for="reference_relation">Relation to Candidate</label>
+          <select id="reference_relation" name="reference_relation">
+            <option value="">— Self —</option>
+            <option>Father</option>
+            <option>Mother</option>
+            <option>Brother</option>
+            <option>Sister</option>
+            <option>Relative</option>
+            <option>Friend</option>
+            <option>Bureau Staff</option>
+            <option>Other</option>
+          </select>
         </div>
       </div>
     </fieldset>

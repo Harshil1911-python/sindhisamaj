@@ -10,6 +10,7 @@
   :root{
     --ink:#14161f; --indigo:#1b3a63; --maroon:#8b1e3f; --gold:#c9972b; --gold-soft:#e0b559;
     --cream:#f6f0e4; --cream-soft:#fbf8f1; --line: rgba(201,151,43,0.35); --text-muted:#5a5648;
+    --brand-maroon:#7a2323; --brand-maroon-dark:#5c1a1a; --blush:#f4e3e0; --blush-soft:#f8ece9;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   body{font-family:'Mukta', sans-serif; color:var(--ink); line-height:1.55; background:var(--cream-soft);}
@@ -44,26 +45,61 @@
 
   .hero{
     position:relative; min-height:82vh; display:flex; align-items:center;
-    background-image: linear-gradient(180deg, rgba(20,22,31,0.72), rgba(20,22,31,0.55) 40%, rgba(20,22,31,0.85));
-    background-size:cover; background-position:center; color:var(--cream-soft);
+    background:var(--blush-soft); color:var(--ink); overflow:hidden; padding:50px 0;
   }
-  .hero-inner{max-width:1100px; margin:0 auto; padding:60px 24px; width:100%;}
+  .hero-deco-circle{position:absolute; border-radius:50%; background:var(--blush); z-index:0;}
+  .hero-inner{max-width:1100px; margin:0 auto; padding:0 24px; width:100%; position:relative; z-index:1;}
+  .hero-grid{display:grid; grid-template-columns:1fr 1.1fr; gap:56px; align-items:center;}
+
+  /* --- vertical sliding image carousel --- */
+  .carousel-wrap{
+    display:grid; grid-template-columns:1fr 1fr; gap:20px; height:600px;
+    overflow:hidden; position:relative;
+  }
+  .carousel-col{overflow:hidden; height:100%; border-radius:2px;}
+  .carousel-track{display:flex; flex-direction:column; gap:20px; will-change:transform;}
+  .carousel-track img{width:100%; height:260px; object-fit:cover; border-radius:2px; display:block;
+    box-shadow:0 6px 18px rgba(20,10,10,0.12);}
+  .carousel-col.col-up .carousel-track{animation:scrollUp 10s linear infinite;}
+  .carousel-col.col-down .carousel-track{animation:scrollDown 10s linear infinite;}
+  .carousel-col.col-down{margin-top:-90px;}
+  @keyframes scrollUp{
+    0%{transform:translateY(0);}
+    100%{transform:translateY(-50%);}
+  }
+  @keyframes scrollDown{
+    0%{transform:translateY(-50%);}
+    100%{transform:translateY(0);}
+  }
+  .carousel-col:hover .carousel-track{animation-play-state:paused;}
+
+  .jhulelal-side{
+    position:absolute; right:18px; bottom:18px; width:88px; height:88px; border-radius:50%;
+    object-fit:cover; border:3px solid var(--cream-soft); box-shadow:0 8px 22px rgba(0,0,0,0.25); z-index:2;
+  }
+
   .eyebrow{
-    color:var(--gold-soft); text-transform:uppercase; letter-spacing:0.25em; font-size:0.78rem;
+    color:var(--brand-maroon); text-transform:uppercase; letter-spacing:0.25em; font-size:0.78rem;
     font-weight:700; margin-bottom:18px; display:flex; align-items:center; gap:10px;
   }
-  .eyebrow::before{content:''; width:34px; height:1px; background:var(--gold-soft);}
-  .hero h1{font-size:clamp(2.3rem, 5.5vw, 3.6rem); max-width:760px; margin-bottom:20px; line-height:1.15;}
-  .hero p{max-width:560px; color:rgba(246,240,228,0.85); font-size:1.05rem; margin-bottom:36px;}
+  .eyebrow::before{content:''; width:34px; height:1px; background:var(--brand-maroon);}
+  .hero h1{font-size:clamp(2.1rem, 4.6vw, 3.2rem); max-width:640px; margin-bottom:20px; line-height:1.2; color:var(--brand-maroon-dark);}
+  .hero p{max-width:520px; color:var(--text-muted); font-size:1.05rem; margin-bottom:36px;}
   .hero-actions{display:flex; gap:16px; flex-wrap:wrap;}
   .btn{
-    display:inline-flex; align-items:center; justify-content:center; padding:15px 32px; border-radius:3px;
+    display:inline-flex; align-items:center; justify-content:center; padding:15px 32px; border-radius:6px;
     font-weight:700; font-size:0.98rem; cursor:pointer; border:none; transition:.2s;
   }
-  .btn-gold{background:var(--gold); color:var(--ink);}
-  .btn-gold:hover{background:var(--gold-soft); box-shadow:0 8px 20px rgba(201,151,43,0.35); transform:translateY(-2px);}
-  .btn-ghost{background:transparent; border:1px solid rgba(246,240,228,0.5); color:var(--cream-soft);}
-  .btn-ghost:hover{border-color:var(--gold-soft); color:var(--gold-soft);}
+  .btn-gold{background:var(--brand-maroon); color:var(--cream-soft);}
+  .btn-gold:hover{background:var(--brand-maroon-dark); box-shadow:0 8px 20px rgba(122,35,35,0.35); transform:translateY(-2px);}
+  .btn-ghost{background:transparent; border:1px solid var(--brand-maroon); color:var(--brand-maroon);}
+  .btn-ghost:hover{background:var(--blush); color:var(--brand-maroon-dark);}
+
+  @media (max-width:900px){
+    .hero-grid{grid-template-columns:1fr; gap:34px;}
+    .carousel-wrap{height:420px; order:1;}
+    .hero-text{order:2;}
+  }
 
   .strip{background:var(--maroon); color:var(--cream-soft); padding:14px 24px; text-align:center; font-size:0.9rem;}
 
@@ -97,28 +133,57 @@
 <header>
   <div class="nav-wrap">
     <div class="brand">
-      <div class="brand-mark">SS</div>
-      <div class="brand-text">सिटी लाइट सिंधी समाज परिवार, सूरत</div>
+      <div class="brand-mark">S</div>
+      <div class="brand-text">Sindhi Samaj Pariwar Surat</div>
     </div>
     <div class="nav-links">
       <a href="register.html">Register Profile</a>
-      <a href="login.html">My Profile</a>
-      <a href="signin.html" class="btn-outline">Admin Sign In</a>
+      <a href="signin.html" class="btn-outline">Login</a>
     </div>
   </div>
 </header>
 <div class="ajrak-strip"></div>
 
 <div class="hero" id="hero">
+  <div class="hero-deco-circle" style="width:170px; height:170px; top:12%; right:26%;"></div>
+  <div class="hero-deco-circle" style="width:90px; height:90px; bottom:14%; right:8%;"></div>
+  <div class="hero-deco-circle" style="width:120px; height:120px; bottom:6%; right:20%;"></div>
   <div class="hero-inner">
-    <div class="eyebrow">Marriage Bureau · Est. for our Samaj</div>
-    <h1>सिटी लाइट सिंधी समाज परिवार, सूरत.</h1>
-    <p>A dedicated matrimonial registry maintained by the Sindhi Samaj Pariwar, Surat — helping brides and grooms from our community find well-matched, verified profiles.</p>
-    <div class="hero-actions">
-      <a href="register.html" class="btn btn-gold">Register Your Profile</a>
-      <a href="signin.html" class="btn btn-ghost">Admin Sign In</a>
+    <div class="hero-grid">
+      <div class="carousel-wrap">
+        <div class="carousel-col col-up">
+          <div class="carousel-track">
+            <img src="image1.png" alt="">
+            <img src="image3.png" alt="">
+            <img src="image5.png" alt="">
+            <img src="image1.png" alt="">
+            <img src="image3.png" alt="">
+            <img src="image5.png" alt="">
+          </div>
+        </div>
+        <div class="carousel-col col-down">
+          <div class="carousel-track">
+            <img src="image2.png" alt="">
+            <img src="image4.png" alt="">
+            <img src="image6.png" alt="">
+            <img src="image2.png" alt="">
+            <img src="image4.png" alt="">
+            <img src="image6.png" alt="">
+          </div>
+        </div>
+      </div>
+      <div class="hero-text">
+        <div class="eyebrow">Marriage Bureau · Est. for our Samaj</div>
+        <h1>सिटी लाइट सिंधी समाज परिवार, सूरत</h1>
+        <p>A dedicated matrimonial registry maintained by the Sindhi Samaj Pariwar, Surat — helping brides and grooms from our community find well-matched, verified profiles.</p>
+        <div class="hero-actions">
+          <a href="register.html" class="btn btn-gold">Register Your Profile</a>
+          <a href="signin.html" class="btn btn-ghost">Login</a>
+        </div>
+      </div>
     </div>
   </div>
+  <img src="jhulelal.png" class="jhulelal-side" alt="Jhulelal">
 </div>
 
 <div class="strip">Registrations are reviewed by the Samaj bureau office — walk in during office hours for in-person profile browsing assistance.</div>
@@ -159,18 +224,6 @@
 
 <script>
   document.getElementById('yr').textContent = new Date().getFullYear();
-
-  // Show bgmob.png on phones, bg.png on desktop/tablet.
-  function isMobileDevice(){
-    const uaMobile = /Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const iPadOS = /Macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1;
-    const narrowScreen = window.innerWidth <= 768;
-    return uaMobile || iPadOS || narrowScreen;
-  }
-  const heroEl = document.getElementById('hero');
-  const bgFile = isMobileDevice() ? 'bgmob.png' : 'bg.png';
-  heroEl.style.backgroundImage =
-    `linear-gradient(180deg, rgba(20,22,31,0.72), rgba(20,22,31,0.55) 40%, rgba(20,22,31,0.85)), url('${bgFile}')`;
 </script>
 </body>
 </html>

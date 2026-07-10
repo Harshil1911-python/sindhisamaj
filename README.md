@@ -182,12 +182,59 @@ Password).
 ## Notes
 
 - `register.html` was extended from your example with a **Photos** section
-  (multiple file upload) since the admin card/QR view needs profile photos.
-  Password is now optional (members don't log in — only admins do).
+  (multiple file upload) since the admin card/QR view needs profile photos,
+  plus a **Reference** section for "filled on behalf of" cases. Password is
+  now **required** at registration, since it powers the registrant's own
+  login (see below).
 - Verification documents (Aadhar, passport — both numbers and photos) are
   visible to admins only in `view.html`, and are always excluded from the
-  public QR/details view.
-- Passwords set at registration now power the registrant's own login at
-  `login.html` / `dashboard.html` — this is a completely separate session
-  from the admin login, so a registrant can never reach `admin.html` or
-  `view.html` with their own credentials.
+  public QR/details view. The Reference fields and Admin Notes are excluded
+  from the public view for the same reason.
+- Passwords set at registration now power the registrant's own login —
+  same unified `signin.html` page as admins use, but a completely separate
+  session, so a registrant can never reach `admin.html` or `view.html`
+  with their own credentials.
+
+### Bug fix: filters / bulk import
+- **Found and fixed the cause of "filters not working."** CSV/Excel imports
+  were silently landing with status `Pending` (the same default used for
+  public self-registrations), so bulk-imported profiles never appeared in
+  Walk-in View — no matter what filter was applied — until each one was
+  individually approved. Admin-driven CSV/Excel imports now insert as
+  `Active` immediately, since that data is already trusted/vetted by the
+  office. (Public self-registration still correctly defaults to `Pending`.)
+  Every filter (single, combined, age range, birth year range, search) was
+  re-tested against realistic bulk-imported data and works correctly.
+
+### Reference field
+- `register.html` now has a **Reference** section: "Filling this form on
+  behalf of someone? Enter their name" plus a **Relation to Candidate**
+  dropdown (Father/Mother/Sibling/Relative/Friend/Bureau Staff/Other) —
+  for cases where a parent or relative is registering on someone's behalf.
+- Included in CSV/Excel export and import, editable by admins in
+  `view.html` and by the registrant in `dashboard.html`, but **always
+  excluded from the public QR/details page** (internal bureau info only).
+
+### Unified login
+- `signin.html` is now a single **Login** page for everyone. The backend
+  tries the entered username as an admin login first, then falls back to
+  checking it as a registrant's email/phone — whichever matches sends you
+  to the right place (`admin.html` or `dashboard.html`). The old
+  `login.html` still works as a redirect to `signin.html` for anyone with
+  it bookmarked. The landing page now just shows one "Login" button.
+
+### Reports/stats: Male vs Female
+- Both `reports.html` and the admin Dashboard stat cards now show **Male /
+  Female** counts (based on the `gender` field) instead of Bride/Groom
+  counts (which reflected what someone registered *as*, not their gender).
+
+### Easier Kundli management
+- The Kundli PDF is no longer locked to whatever was uploaded at
+  registration time. A shared upload endpoint now lets **admins** (from
+  `view.html`) and **registrants themselves** (from `dashboard.html`)
+  upload, replace, or remove a Kundli PDF at any time — with clear
+  before/after states (an empty-state message if none exists yet, an
+  inline PDF viewer plus "Open in New Tab" and "Remove" once one is
+  uploaded). The "View Kundli PDF" button is now always clickable instead
+  of being grayed out when nothing was uploaded yet.
+

@@ -125,6 +125,18 @@
     <input type="file" id="addPhotoInput" accept="image/*" multiple>
   </div>
 
+  <div class="photo-section">
+    <h2>Kundli / Horoscope PDF</h2>
+    <div class="desc" id="kundliStatus">No Kundli PDF uploaded yet.</div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+      <a href="#" id="kundliViewLink" target="_blank" class="btn btn-outline" style="display:none; padding:9px 18px;">View Current Kundli</a>
+      <input type="file" id="kundliFileInput" accept="application/pdf">
+      <button class="btn btn-gold" type="button" id="kundliUploadBtn" style="padding:9px 18px;">Upload / Replace</button>
+      <button class="btn btn-outline" type="button" id="kundliRemoveBtn" style="display:none; padding:9px 18px; border-color:var(--maroon); color:var(--maroon);">Remove</button>
+    </div>
+    <div class="save-banner" id="kundliBanner"></div>
+  </div>
+
   <form id="profileForm"></form>
 
   <div class="photo-section">
@@ -166,6 +178,7 @@
     kundli_available:"Kundli Available", birth_chart:"Birth Chart", horoscope_notes:"Horoscope Notes",
     disability:"Disability", special_notes:"Special Notes",
     aadhar_number:"Aadhar Number", passport_number:"Passport Number",
+    reference_name:"Filled On Behalf Of / Reference Name", reference_relation:"Relation to Candidate",
   };
 
   const SECTIONS = [
@@ -180,6 +193,7 @@
     ["Astrological Details", ["manglik","rashi","nakshatra","mulank","kundli_available","birth_chart","horoscope_notes"]],
     ["Medical Information", ["disability","special_notes"]],
     ["Verification", ["aadhar_number","passport_number"]],
+    ["Reference", ["reference_name","reference_relation"]],
   ];
 
   const SELECT_FIELDS = {
@@ -189,6 +203,7 @@
     smoking: ["No","Yes","Occasionally"],
     drinking: ["No","Yes","Occasionally"],
     manglik: ["Yes","No","Partial"],
+    reference_relation: ["Father","Mother","Brother","Sister","Relative","Friend","Bureau Staff","Other"],
   };
   const TEXTAREA_FIELDS = new Set(["about_yourself","horoscope_notes","special_notes","permanent_address","temporary_address"]);
 
@@ -217,7 +232,50 @@
     badge.className = 'status-badge ' + (p.status || 'Active');
     document.getElementById('completenessPct').textContent = (p.completeness || 0) + '%';
     document.getElementById('completenessFill').style.width = (p.completeness || 0) + '%';
+
+    const kStatus = document.getElementById('kundliStatus');
+    const kView = document.getElementById('kundliViewLink');
+    const kRemove = document.getElementById('kundliRemoveBtn');
+    if (p.kundli_pdf_path){
+      kStatus.textContent = 'A Kundli PDF is on file.';
+      kView.href = p.kundli_pdf_path;
+      kView.style.display = 'inline-flex';
+      kRemove.style.display = 'inline-flex';
+    } else {
+      kStatus.textContent = 'No Kundli PDF uploaded yet.';
+      kView.style.display = 'none';
+      kRemove.style.display = 'none';
+    }
   }
+
+  document.getElementById('kundliUploadBtn').addEventListener('click', async () => {
+    const fileInput = document.getElementById('kundliFileInput');
+    const banner = document.getElementById('kundliBanner');
+    const file = fileInput.files[0];
+    if (!file){ showBanner(banner, 'Choose a PDF file first.', false); return; }
+    const fd = new FormData(); fd.append('kundli_pdf', file);
+    try {
+      const res = await fetch(`/api/profile/${currentProfile.id}/kundli`, {method:'POST', body: fd});
+      const d = await res.json();
+      if (d.success){
+        showBanner(banner, 'Kundli uploaded successfully.', true);
+        fileInput.value = '';
+        loadProfile();
+      } else {
+        showBanner(banner, d.message || 'Upload failed.', false);
+      }
+    } catch (e){
+      showBanner(banner, 'Could not reach server.', false);
+    }
+  });
+
+  document.getElementById('kundliRemoveBtn').addEventListener('click', async () => {
+    if (!confirm('Remove your uploaded Kundli PDF?')) return;
+    const banner = document.getElementById('kundliBanner');
+    const res = await fetch(`/api/profile/${currentProfile.id}/kundli`, {method:'DELETE'});
+    const d = await res.json();
+    if (d.success){ showBanner(banner, 'Kundli removed.', true); loadProfile(); }
+  });
 
   function renderPhotos(p){
     const grid = document.getElementById('photoGrid');

@@ -61,6 +61,7 @@ PROFILE_FIELDS = [
     "manglik", "rashi", "nakshatra", "mulank", "kundli_available", "birth_chart", "horoscope_notes",
     "disability", "special_notes",
     "aadhar_number", "passport_number",
+    "reference_name", "reference_relation",
 ]
 
 FILE_FIELDS = ["kundli_pdf", "aadhar_photo", "passport_photo"]  # single-file inputs
@@ -93,6 +94,14 @@ def init_db():
     # migration safety net for databases created before admin_notes existed
     try:
         conn.execute("ALTER TABLE profiles ADD COLUMN admin_notes TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        conn.execute("ALTER TABLE profiles ADD COLUMN reference_name TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        conn.execute("ALTER TABLE profiles ADD COLUMN reference_relation TEXT")
     except sqlite3.OperationalError:
         pass
     # create a default admin if none exists yet
@@ -134,7 +143,7 @@ def user_login_required(view):
         if not session.get("user_profile_id"):
             if request.path.startswith("/api/"):
                 return jsonify({"success": False, "message": "Please log in to your profile."}), 401
-            return redirect("/login.html")
+            return redirect("/signin.html")
         return view(*args, **kwargs)
     return wrapped
 
@@ -400,7 +409,7 @@ def signin_page():
 
 @app.route("/login.html")
 def user_login_page():
-    return send_from_directory(BASE_DIR, "login.html")
+    return redirect("/signin.html")
 
 
 @app.route("/dashboard.html")
@@ -450,27 +459,38 @@ def uploaded_file(filename):
 @app.route("/signin", methods=["POST"])
 def signin():
     data = request.get_json(silent=True) or request.form
-    username = (data.get("username") or "").strip()
+    identifier = (data.get("username") or "").strip()
     password = data.get("password") or ""
     ip = client_ip()
     db = get_db()
 
-    lockout = is_locked_out(db, username, ip)
+    lockout = is_locked_out(db, identifier, ip)
     if lockout:
         return jsonify({
             "success": False,
             "message": f"Too many failed attempts. Please try again in about {lockout} minutes."
         }), 429
 
-    row = db.execute("SELECT * FROM admins WHERE username = ?", (username,)).fetchone()
+    # Try admin login first
+    row = db.execute("SELECT * FROM admins WHERE username = ?", (identifier,)).fetchone()
     if row and check_password_hash(row["password_hash"], password):
-        record_login_attempt(db, username, ip, True)
+        record_login_attempt(db, identifier, ip, True)
         session["admin_id"] = row["id"]
         session["admin_username"] = row["username"]
         return jsonify({"success": True, "redirect": "/admin.html"})
 
-    record_login_attempt(db, username, ip, False)
-    return jsonify({"success": False, "message": "Invalid username or password"}), 401
+    # Fall back to member (registrant) login by email or phone
+    prow = db.execute(
+        "SELECT * FROM profiles WHERE (email = ? OR phone = ?) AND password_hash IS NOT NULL",
+        (identifier, identifier),
+    ).fetchone()
+    if prow and check_password_hash(prow["password_hash"], password):
+        record_login_attempt(db, identifier, ip, True)
+        session["user_profile_id"] = prow["id"]
+        return jsonify({"success": True, "redirect": "/dashboard.html"})
+
+    record_login_attempt(db, identifier, ip, False)
+    return jsonify({"success": False, "message": "Invalid username/email/phone or password"}), 401
 
 
 @app.route("/signout", methods=["POST"])
@@ -630,6 +650,43 @@ def api_my_profile_add_photos():
             added.append(f"/uploads/{saved}")
     db.commit()
     return jsonify({"success": True, "added": added})
+
+
+@app.route("/api/profile/<int:profile_id>/kundli", methods=["POST"])
+def api_upload_kundli(profile_id):
+    """Upload or replace a profile's Kundli PDF. Allowed for admins (any profile)
+    or the owning registrant (their own profile only) — kept as one easy endpoint
+    so both view.html and dashboard.html can use it the same way."""
+    is_admin = bool(session.get("admin_id"))
+    is_owner = session.get("user_profile_id") == profile_id
+    if not is_admin and not is_owner:
+        return jsonify({"success": False, "message": "Not authorized"}), 401
+
+    db = get_db()
+    row = db.execute("SELECT id FROM profiles WHERE id = ?", (profile_id,)).fetchone()
+    if not row:
+        abort(404)
+
+    kfile = request.files.get("kundli_pdf")
+    if not kfile or not kfile.filename or not allowed_ext(kfile.filename, ALLOWED_DOC_EXT):
+        return jsonify({"success": False, "message": "Please upload a PDF file."}), 400
+
+    saved = save_upload(kfile, f"kundli_{profile_id}")
+    db.execute("UPDATE profiles SET kundli_pdf_path = ? WHERE id = ?", (saved, profile_id))
+    db.commit()
+    return jsonify({"success": True, "kundli_pdf_path": f"/uploads/{saved}"})
+
+
+@app.route("/api/profile/<int:profile_id>/kundli", methods=["DELETE"])
+def api_delete_kundli(profile_id):
+    is_admin = bool(session.get("admin_id"))
+    is_owner = session.get("user_profile_id") == profile_id
+    if not is_admin and not is_owner:
+        return jsonify({"success": False, "message": "Not authorized"}), 401
+    db = get_db()
+    db.execute("UPDATE profiles SET kundli_pdf_path = NULL WHERE id = ?", (profile_id,))
+    db.commit()
+    return jsonify({"success": True})
 
 
 def _photo_owner_check(db, photo_id):
@@ -899,9 +956,9 @@ def api_public_profile():
     if not row:
         abort(404)
     profile = attach_photos(db, row_to_dict(row))
-    # strip sensitive verification data from the public view
+    # strip sensitive/internal data from the public view
     for f in ["aadhar_number", "aadhar_photo_path", "passport_number", "passport_photo_path",
-              "password_hash", "public_token"]:
+              "password_hash", "public_token", "reference_name", "reference_relation", "admin_notes"]:
         profile.pop(f, None)
     return jsonify({"success": True, "profile": profile})
 
@@ -1216,6 +1273,9 @@ def import_csv():
         cols.append("public_token")
         vals.append(uuid.uuid4().hex)
         marks.append("?")
+        cols.append("status")
+        vals.append("Active")
+        marks.append("?")
         db.execute(f"INSERT INTO profiles ({', '.join(cols)}) VALUES ({', '.join(marks)})", vals)
         inserted += 1
     db.commit()
@@ -1293,6 +1353,9 @@ def import_xlsx():
             marks.append("?")
         cols.append("public_token")
         vals.append(uuid.uuid4().hex)
+        marks.append("?")
+        cols.append("status")
+        vals.append("Active")
         marks.append("?")
         db.execute(f"INSERT INTO profiles ({', '.join(cols)}) VALUES ({', '.join(marks)})", vals)
         inserted += 1
@@ -1514,11 +1577,11 @@ def biodata_png(profile_id):
 def api_stats():
     db = get_db()
     total = db.execute("SELECT COUNT(*) FROM profiles").fetchone()[0]
-    brides = db.execute("SELECT COUNT(*) FROM profiles WHERE profile_for = 'Bride'").fetchone()[0]
-    grooms = db.execute("SELECT COUNT(*) FROM profiles WHERE profile_for = 'Groom'").fetchone()[0]
+    males = db.execute("SELECT COUNT(*) FROM profiles WHERE gender = 'Male'").fetchone()[0]
+    females = db.execute("SELECT COUNT(*) FROM profiles WHERE gender = 'Female'").fetchone()[0]
     active = db.execute("SELECT COUNT(*) FROM profiles WHERE status = 'Active'").fetchone()[0]
     pending = db.execute("SELECT COUNT(*) FROM profiles WHERE status = 'Pending'").fetchone()[0]
-    return jsonify({"success": True, "total": total, "brides": brides, "grooms": grooms,
+    return jsonify({"success": True, "total": total, "males": males, "females": females,
                      "active": active, "pending": pending})
 
 

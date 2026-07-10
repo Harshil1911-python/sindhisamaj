@@ -128,8 +128,8 @@
   <div class="stats-grid">
     <div class="stat-card"><div class="n" id="statTotal">—</div><div class="l">Total Profiles</div></div>
     <div class="stat-card"><div class="n" id="statPending">—</div><div class="l">Pending Approval</div></div>
-    <div class="stat-card"><div class="n" id="statBrides">—</div><div class="l">Bride Profiles</div></div>
-    <div class="stat-card"><div class="n" id="statGrooms">—</div><div class="l">Groom Profiles</div></div>
+    <div class="stat-card"><div class="n" id="statMales">—</div><div class="l">Male Profiles</div></div>
+    <div class="stat-card"><div class="n" id="statFemales">—</div><div class="l">Female Profiles</div></div>
     <div class="stat-card"><div class="n" id="statActive">—</div><div class="l">Active Profiles</div></div>
   </div>
 
@@ -222,8 +222,8 @@
     if (d.success){
       document.getElementById('statTotal').textContent = d.total;
       document.getElementById('statPending').textContent = d.pending;
-      document.getElementById('statBrides').textContent = d.brides;
-      document.getElementById('statGrooms').textContent = d.grooms;
+      document.getElementById('statMales').textContent = d.males;
+      document.getElementById('statFemales').textContent = d.females;
       document.getElementById('statActive').textContent = d.active;
     }
   }

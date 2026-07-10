@@ -351,7 +351,17 @@
       <div><h2>Kundli / Horoscope PDF</h2></div>
       <button class="modal-close" id="kundliCloseBtn">&times;</button>
     </div>
-    <iframe id="kundliFrame" src="" style="width:100%; height:75vh; border:none; background:#fff;"></iframe>
+    <div style="padding:16px 26px; display:flex; align-items:center; gap:14px; flex-wrap:wrap; border-bottom:1px solid var(--line); background:var(--cream);">
+      <input type="file" id="kundliFileInput" accept="application/pdf" style="font-size:0.85rem;">
+      <button class="btn btn-gold" id="kundliUploadBtn" style="padding:9px 18px;">Upload / Replace</button>
+      <button class="btn btn-danger" id="kundliRemoveBtn" style="padding:9px 18px;">Remove</button>
+      <a class="btn btn-outline" id="kundliOpenTabBtn" target="_blank" style="padding:9px 18px;">Open in New Tab</a>
+      <span id="kundliMsg" style="font-size:0.82rem; color:var(--text-muted);"></span>
+    </div>
+    <div id="kundliEmptyState" style="padding:40px 26px; text-align:center; color:var(--text-muted); font-size:0.9rem;">
+      No Kundli PDF uploaded yet for this profile. Choose a file above and click "Upload / Replace" to add one.
+    </div>
+    <iframe id="kundliFrame" src="" style="width:100%; height:70vh; border:none; background:#fff; display:none;"></iframe>
   </div>
 </div>
 
@@ -407,6 +417,7 @@
     kundli_available:"Kundli Available", birth_chart:"Birth Chart", horoscope_notes:"Horoscope Notes",
     disability:"Disability", special_notes:"Special Notes",
     aadhar_number:"Aadhar Number", passport_number:"Passport Number", status:"Status",
+    reference_name:"Filled On Behalf Of / Reference Name", reference_relation:"Relation to Candidate",
     admin_notes:"Admin Notes"
   };
 
@@ -422,6 +433,7 @@
     ["Astrological Details", ["manglik","rashi","nakshatra","mulank","kundli_available","birth_chart","horoscope_notes"]],
     ["Medical Information", ["disability","special_notes"]],
     ["Verification (Admin Only)", ["aadhar_number","passport_number","status"]],
+    ["Reference (Admin Only)", ["reference_name","reference_relation"]],
     ["Admin Notes (Private)", ["admin_notes"]],
   ];
 
@@ -433,6 +445,7 @@
     drinking: ["No","Yes","Occasionally"],
     manglik: ["Yes","No","Partial"],
     status: ["Pending","Active","Inactive","Matched","Hold","Rejected"],
+    reference_relation: ["Father","Mother","Brother","Sister","Relative","Friend","Bureau Staff","Other"],
   };
   const TEXTAREA_FIELDS = new Set(["about_yourself","horoscope_notes","special_notes","permanent_address","temporary_address","admin_notes"]);
   const EDITABLE_FIELDS = new Set(SECTIONS.flatMap(([, fields]) => fields));
@@ -601,7 +614,7 @@
     const b = (await resB.json()).profile;
     const body = document.getElementById('compareBody');
 
-    const compareFields = SECTIONS.filter(([t]) => t !== 'Verification (Admin Only)' && t !== 'Admin Notes (Private)')
+    const compareFields = SECTIONS.filter(([t]) => t !== 'Verification (Admin Only)' && t !== 'Admin Notes (Private)' && t !== 'Reference (Admin Only)')
       .flatMap(([, fields]) => fields);
 
     const photoRow = `
@@ -712,8 +725,9 @@
       currentProfileData.status === 'Pending' ? 'flex' : 'none';
 
     const kundliBtn = document.getElementById('btnKundli');
-    kundliBtn.disabled = !currentProfileData.kundli_pdf_path;
-    kundliBtn.style.opacity = currentProfileData.kundli_pdf_path ? '1' : '0.5';
+    kundliBtn.disabled = false;
+    kundliBtn.style.opacity = '1';
+    kundliBtn.textContent = currentProfileData.kundli_pdf_path ? 'View Kundli PDF' : 'Add Kundli PDF';
 
     document.getElementById('modalOverlay').classList.add('show');
   }
@@ -732,9 +746,28 @@
     loadProfiles();
   });
 
+  function renderKundliModal(){
+    const path = currentProfileData && currentProfileData.kundli_pdf_path;
+    const frame = document.getElementById('kundliFrame');
+    const empty = document.getElementById('kundliEmptyState');
+    const openTab = document.getElementById('kundliOpenTabBtn');
+    if (path){
+      frame.src = path;
+      frame.style.display = 'block';
+      empty.style.display = 'none';
+      openTab.href = path;
+      openTab.style.display = 'inline-flex';
+    } else {
+      frame.src = '';
+      frame.style.display = 'none';
+      empty.style.display = 'block';
+      openTab.style.display = 'none';
+    }
+  }
+
   document.getElementById('btnKundli').addEventListener('click', () => {
-    if (!currentProfileData || !currentProfileData.kundli_pdf_path) return;
-    document.getElementById('kundliFrame').src = currentProfileData.kundli_pdf_path;
+    renderKundliModal();
+    document.getElementById('kundliMsg').textContent = '';
     document.getElementById('kundliOverlay').classList.add('show');
   });
   document.getElementById('kundliCloseBtn').addEventListener('click', () => {
@@ -745,6 +778,42 @@
     if (e.target.id === 'kundliOverlay'){
       document.getElementById('kundliOverlay').classList.remove('show');
       document.getElementById('kundliFrame').src = '';
+    }
+  });
+
+  document.getElementById('kundliUploadBtn').addEventListener('click', async () => {
+    const fileInput = document.getElementById('kundliFileInput');
+    const msg = document.getElementById('kundliMsg');
+    const file = fileInput.files[0];
+    if (!file){ msg.textContent = 'Choose a PDF file first.'; msg.style.color = 'var(--maroon)'; return; }
+    msg.textContent = 'Uploading...'; msg.style.color = 'var(--text-muted)';
+    const fd = new FormData(); fd.append('kundli_pdf', file);
+    try {
+      const res = await fetch(`/api/profile/${currentProfileId}/kundli`, {method:'POST', body: fd});
+      const d = await res.json();
+      if (d.success){
+        currentProfileData.kundli_pdf_path = d.kundli_pdf_path;
+        fileInput.value = '';
+        msg.textContent = 'Uploaded successfully.'; msg.style.color = 'var(--indigo)';
+        renderKundliModal();
+        loadProfiles();
+      } else {
+        msg.textContent = d.message || 'Upload failed.'; msg.style.color = 'var(--maroon)';
+      }
+    } catch (e){
+      msg.textContent = 'Could not reach server.'; msg.style.color = 'var(--maroon)';
+    }
+  });
+
+  document.getElementById('kundliRemoveBtn').addEventListener('click', async () => {
+    if (!currentProfileData || !currentProfileData.kundli_pdf_path) return;
+    if (!confirm('Remove the Kundli PDF from this profile?')) return;
+    const res = await fetch(`/api/profile/${currentProfileId}/kundli`, {method:'DELETE'});
+    const d = await res.json();
+    if (d.success){
+      currentProfileData.kundli_pdf_path = null;
+      renderKundliModal();
+      loadProfiles();
     }
   });
 

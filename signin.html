@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin Sign In — Sindhi Samaj Surat</title>
+<title>Login — Sindhi Samaj Surat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -55,22 +55,22 @@
 <body>
   <div class="panel">
     <div class="brand"><div class="brand-mark">S</div></div>
-    <h1>Admin Sign In</h1>
+    <h1>Login</h1>
     <div class="sub">Sindhi Samaj Pariwar Surat — Marriage Bureau</div>
     <form id="signinForm">
       <div class="field">
-        <label for="username">Username</label>
-        <input type="text" id="username" name="username" required autocomplete="username">
+        <label for="username">Username, Email, or Phone</label>
+        <input type="text" id="username" name="username" required autocomplete="username" placeholder="Admin username, or your email/phone">
       </div>
       <div class="field">
         <label for="password">Password</label>
         <input type="password" id="password" name="password" required autocomplete="current-password">
       </div>
-      <button type="submit" class="btn" id="submitBtn">Sign In</button>
+      <button type="submit" class="btn" id="submitBtn">Log In</button>
       <div class="status-msg" id="statusMsg"></div>
     </form>
     <a href="landing.html" class="back">&larr; Back to home</a>
-    <div class="hint">Entry Restricted. Only <strong>ADMINS</strong> Access Allowed.</div>
+    <div class="hint">Registered members: log in with the email or phone &amp; password you used when registering.<br>Bureau staff: log in with your admin username &amp; password.</div>
   </div>
 
 <script>
@@ -81,7 +81,7 @@
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Signing in...';
+    submitBtn.textContent = 'Logging in...';
     statusMsg.className = 'status-msg';
 
     try {
@@ -97,16 +97,16 @@
       if (res.ok && result.success) {
         window.location.href = result.redirect || 'admin.html';
       } else {
-        statusMsg.textContent = result.message || 'Sign in failed.';
+        statusMsg.textContent = result.message || 'Login failed.';
         statusMsg.className = 'status-msg show err';
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Sign In';
+        submitBtn.textContent = 'Log In';
       }
     } catch (err) {
       statusMsg.textContent = 'Could not reach the server. Please try again.';
       statusMsg.className = 'status-msg show err';
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Sign In';
+      submitBtn.textContent = 'Log In';
     }
   });
 </script>

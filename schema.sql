@@ -105,6 +105,10 @@ CREATE TABLE IF NOT EXISTS profiles (
     passport_number TEXT,
     passport_photo_path TEXT,
 
+    -- Reference (who is filling this form, if on behalf of the candidate)
+    reference_name TEXT,
+    reference_relation TEXT,
+
     -- Account
     password_hash TEXT,
 
