@@ -327,6 +327,7 @@
       <button class="btn btn-outline" id="btnKundli">View Kundli PDF</button>
       <button class="btn btn-outline" id="btnSuggest">Suggest Matches</button>
       <button class="btn btn-outline" id="btnEdit">Edit Profile</button>
+      <button class="btn btn-outline" id="btnSetPassword">Set User Password</button>
       <button class="btn btn-danger" id="btnDelete">Delete Profile</button>
     </div>
     <div class="modal-actions" id="editActions" style="display:none;">
@@ -387,6 +388,27 @@
   </div>
 </div>
 
+<!-- Set User Password Modal -->
+<div class="modal-overlay" id="setPasswordOverlay">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-head">
+      <div><h2>Set User Password</h2><div class="sub" id="setPasswordSub">—</div></div>
+      <button class="modal-close" id="setPasswordCloseBtn">&times;</button>
+    </div>
+    <div style="padding:22px 26px;">
+      <p style="font-size:0.84rem; color:var(--text-muted); margin-bottom:16px;">
+        Use this if a member has forgotten their password or needs their login set up on
+        their behalf. This does not require their current password.
+      </p>
+      <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">New Password</label>
+      <input type="password" id="newUserPasswordInput" minlength="6" placeholder="At least 6 characters"
+             style="width:100%; padding:10px 12px; border:1px solid rgba(27,58,99,0.25); border-radius:2px; font-size:0.9rem; margin-bottom:14px;">
+      <button class="btn btn-gold" id="btnSaveUserPassword" style="width:100%;">Save Password</button>
+      <div id="setPasswordMsg" style="margin-top:10px; font-size:0.84rem;"></div>
+    </div>
+  </div>
+</div>
+
 <!-- Lightbox -->
 <div class="lightbox" id="lightbox">
   <button class="lightbox-close" id="lightboxClose">&times;</button>
@@ -413,10 +435,10 @@
     expected_age:"Expected Age", expected_height:"Expected Height", expected_education:"Expected Education",
     expected_profession:"Expected Profession", expected_income:"Expected Income",
     expected_location:"Expected Location", expected_lifestyle:"Expected Lifestyle",
-    manglik:"Manglik", rashi:"Rashi", nakshatra:"Nakshatra", mulank:"Mulank",
-    kundli_available:"Kundli Available", birth_chart:"Birth Chart", horoscope_notes:"Horoscope Notes",
+    manglik:"Manglik",
+    kundli_available:"Kundli Available", horoscope_notes:"Horoscope Notes",
     disability:"Disability", special_notes:"Special Notes",
-    aadhar_number:"Aadhar Number", passport_number:"Passport Number", status:"Status",
+    status:"Status",
     reference_name:"Filled On Behalf Of / Reference Name", reference_relation:"Relation to Candidate",
     admin_notes:"Admin Notes"
   };
@@ -430,9 +452,9 @@
     ["Address & Contact", ["current_city","native_place","phone","alternate_phone","email","whatsapp","emergency_contact","permanent_address","temporary_address"]],
     ["Lifestyle", ["food_preference","smoking","drinking","habits","hobbies","interests","languages_known","about_yourself"]],
     ["Partner Preference", ["expected_age","expected_height","expected_education","expected_profession","expected_income","expected_location","expected_lifestyle"]],
-    ["Astrological Details", ["manglik","rashi","nakshatra","mulank","kundli_available","birth_chart","horoscope_notes"]],
+    ["Astrological Details", ["manglik","kundli_available","horoscope_notes"]],
     ["Medical Information", ["disability","special_notes"]],
-    ["Verification (Admin Only)", ["aadhar_number","passport_number","status"]],
+    ["Account Status (Admin Only)", ["status"]],
     ["Reference (Admin Only)", ["reference_name","reference_relation"]],
     ["Admin Notes (Private)", ["admin_notes"]],
   ];
@@ -516,7 +538,7 @@
     const grid = document.getElementById('cardGrid');
     grid.innerHTML = '<div class="empty">Loading profiles…</div>';
     const qs = buildQuery();
-    const res = await fetch('/api/profiles' + (qs ? '?' + qs : ''));
+    const res = await fetch('/api/profiles' + (qs ? '?' + qs : ''), {cache: 'no-store'});
     const d = await res.json();
     document.getElementById('countPill').textContent = d.count + ' profile' + (d.count === 1 ? '' : 's');
     if (!d.success || d.count === 0){
@@ -614,7 +636,7 @@
     const b = (await resB.json()).profile;
     const body = document.getElementById('compareBody');
 
-    const compareFields = SECTIONS.filter(([t]) => t !== 'Verification (Admin Only)' && t !== 'Admin Notes (Private)' && t !== 'Reference (Admin Only)')
+    const compareFields = SECTIONS.filter(([t]) => t !== 'Account Status (Admin Only)' && t !== 'Admin Notes (Private)' && t !== 'Reference (Admin Only)')
       .flatMap(([, fields]) => fields);
 
     const photoRow = `
@@ -646,27 +668,33 @@
 
     let compatHtml = '';
     if (compat.success && compat.available) {
-      const factorRows = compat.factors.map(f =>
-        `<div style="flex:1; min-width:110px; text-align:center;">
-          <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase;">${f.name}</div>
-          <div style="font-size:1.1rem; font-weight:700; color:var(--indigo);">${f.score}/${f.max}</div>
-          <div style="font-size:0.7rem; color:var(--text-muted);">${f.note}</div>
-        </div>`
-      ).join('');
-      compatHtml = `
-        <div style="background:var(--cream); border:1px solid var(--line); border-radius:4px; padding:18px 20px; margin-bottom:22px;">
+      const manglikColor = compat.manglik_ok === false ? 'var(--maroon)' : 'var(--text-muted)';
+
+      let ashtakootHtml = '';
+      if (compat.ashtakoot_available) {
+        const factorRows = compat.factors.map(f =>
+          `<div style="flex:1; min-width:110px; text-align:center;">
+            <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase;">${f.name}</div>
+            <div style="font-size:1.1rem; font-weight:700; color:var(--indigo);">${f.score}/${f.max}</div>
+            <div style="font-size:0.7rem; color:var(--text-muted);">${f.note}</div>
+          </div>`
+        ).join('');
+        ashtakootHtml = `
           <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-            <h3 style="font-size:1rem; color:var(--maroon);">Horoscope Compatibility (approximate)</h3>
+            <span style="font-size:0.85rem; color:var(--text-muted);">Ashtakoot score (legacy data)</span>
             <div style="font-size:1.3rem; font-weight:700; color:var(--gold-soft, var(--gold));">${compat.total}/${compat.max_total} (${compat.percentage}%)</div>
           </div>
-          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">${factorRows}</div>
-          <div style="font-size:0.82rem; color:${compat.manglik_ok===false?'var(--maroon)':'var(--text-muted)'}; margin-bottom:8px;">Manglik: ${compat.manglik_note}</div>
-          <div style="font-size:0.72rem; color:var(--text-muted); font-style:italic;">${compat.disclaimer}</div>
-        </div>`;
-    } else if (compat.success) {
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">${factorRows}</div>`;
+      } else {
+        ashtakootHtml = `<div style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">${compat.ashtakoot_reason}</div>`;
+      }
+
       compatHtml = `
-        <div style="background:var(--cream); border:1px solid var(--line); border-radius:4px; padding:16px 20px; margin-bottom:22px; font-size:0.85rem; color:var(--text-muted);">
-          Horoscope compatibility unavailable: ${compat.reason}
+        <div style="background:var(--cream); border:1px solid var(--line); border-radius:4px; padding:18px 20px; margin-bottom:22px;">
+          <h3 style="font-size:1rem; color:var(--maroon); margin-bottom:12px;">Horoscope Compatibility (approximate)</h3>
+          ${ashtakootHtml}
+          <div style="font-size:0.82rem; color:${manglikColor}; margin-bottom:8px;">Manglik: ${compat.manglik_note}</div>
+          <div style="font-size:0.72rem; color:var(--text-muted); font-style:italic;">${compat.disclaimer}</div>
         </div>`;
     }
 
@@ -894,22 +922,6 @@
         return `<div class="mfield"><div class="l">${label}</div><div class="v">${val}</div></div>`;
       }).join('');
       sec.innerHTML = `<h3>${title}</h3><div class="mgrid">${grid}</div>`;
-      if (title === 'Verification (Admin Only)'){
-        const vphotos = [];
-        if (p.aadhar_photo_path) vphotos.push(['Aadhar Photo', p.aadhar_photo_path]);
-        if (p.passport_photo_path) vphotos.push(['Passport Photo', p.passport_photo_path]);
-        if (vphotos.length){
-          const vwrap = document.createElement('div');
-          vwrap.className = 'verify-photos';
-          vwrap.innerHTML = vphotos.map(([label, src]) =>
-            `<div class="vphoto"><img src="${src}" data-src="${src}"><span>${label}</span></div>`
-          ).join('');
-          vwrap.querySelectorAll('img').forEach(img => {
-            img.addEventListener('click', () => openLightbox(img.dataset.src));
-          });
-          sec.appendChild(vwrap);
-        }
-      }
       body.appendChild(sec);
     });
 
@@ -1019,6 +1031,47 @@
 
   document.getElementById('btnEdit').addEventListener('click', () => {
     if (currentProfileData) renderEditMode(currentProfileData);
+  });
+
+  document.getElementById('btnSetPassword').addEventListener('click', () => {
+    if (!currentProfileData) return;
+    document.getElementById('setPasswordSub').textContent = currentProfileData.full_name || 'this profile';
+    document.getElementById('newUserPasswordInput').value = '';
+    document.getElementById('setPasswordMsg').textContent = '';
+    document.getElementById('setPasswordOverlay').classList.add('show');
+  });
+  document.getElementById('setPasswordCloseBtn').addEventListener('click', () => {
+    document.getElementById('setPasswordOverlay').classList.remove('show');
+  });
+  document.getElementById('setPasswordOverlay').addEventListener('click', (e) => {
+    if (e.target.id === 'setPasswordOverlay') document.getElementById('setPasswordOverlay').classList.remove('show');
+  });
+  document.getElementById('btnSaveUserPassword').addEventListener('click', async () => {
+    const pw = document.getElementById('newUserPasswordInput').value;
+    const msg = document.getElementById('setPasswordMsg');
+    if (!pw || pw.length < 6){
+      msg.textContent = 'Password must be at least 6 characters.';
+      msg.style.color = 'var(--maroon)';
+      return;
+    }
+    try {
+      const res = await fetch(`/api/profile/${currentProfileId}/set-password`, {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({new_password: pw})
+      });
+      const d = await res.json();
+      if (d.success){
+        msg.textContent = 'Password updated. The member can now log in with it.';
+        msg.style.color = 'var(--indigo)';
+        setTimeout(() => document.getElementById('setPasswordOverlay').classList.remove('show'), 1400);
+      } else {
+        msg.textContent = d.message || 'Failed to update password.';
+        msg.style.color = 'var(--maroon)';
+      }
+    } catch (e){
+      msg.textContent = 'Could not reach server.';
+      msg.style.color = 'var(--maroon)';
+    }
   });
 
   document.getElementById('btnCancelEdit').addEventListener('click', () => {

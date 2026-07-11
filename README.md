@@ -238,3 +238,41 @@ Password).
   uploaded). The "View Kundli PDF" button is now always clickable instead
   of being grayed out when nothing was uploaded yet.
 
+### Admin can reset a member's password
+- Inside a profile's detail modal in `view.html`, click **"Set User
+  Password"** to set a new login password for that registrant directly —
+  no need to know their current one. Useful when a member forgets their
+  password or needs their `dashboard.html` login set up for them at the
+  office. Enforces the same 6-character minimum as everywhere else.
+
+### Bug fix: deleted profiles "reappearing"
+- **Found and fixed the cause.** `/api/` responses had no cache-control
+  headers, so a browser (or any proxy in between) could serve a stale
+  cached copy of `/api/profiles` after a delete, making it look like the
+  deleted profile "came back after some time." Every `/api/` response now
+  sends `Cache-Control: no-store` (plus matching `Pragma`/`Expires`
+  headers), and the main list-loading fetches in `view.html`, `admin.html`,
+  and `matches.html` also explicitly request `cache: 'no-store'`. Deletes
+  were re-verified to properly cascade-remove a profile's photos and any
+  matches it was part of, and repeated polling after a delete confirmed
+  the profile never reappears.
+
+### Fields removed
+- `register.html` no longer collects **Rashi, Nakshatra, Mulank, or Birth
+  Chart Details**, and the entire **Verification Documents** section
+  (Aadhar number/photo, Passport number/photo) has been removed.
+- These fields are gone from CSV export/import, Excel export/import, the
+  admin edit screen (`view.html`), the registrant dashboard
+  (`dashboard.html`), and the public details page — consistently, in one
+  place (`PROFILE_FIELDS` in `app.py`), so every format stays in sync.
+- Manglik, Kundli (available + PDF upload), and Horoscope Notes are all
+  still collected — only Rashi/Nakshatra/Mulank/Birth Chart were removed.
+- The horoscope compatibility check in Compare Mode now always shows the
+  **Manglik comparison** (which doesn't depend on the removed fields), and
+  gracefully explains that the fuller Ashtakoot score isn't available since
+  Rashi/Nakshatra are no longer collected (it still works automatically for
+  any old profiles that already have that data saved).
+- `landing.html` has been replaced with your own updated version (the
+  image-carousel design) — nothing in the backend depends on its internals
+  beyond the links to `register.html` and `signin.html`, which are unchanged.
+

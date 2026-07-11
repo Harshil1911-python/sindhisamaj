@@ -41,6 +41,19 @@ app = Flask(__name__, template_folder=BASE_DIR, static_folder=BASE_DIR, static_u
 app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 app.config["MAX_CONTENT_LENGTH"] = 60 * 1024 * 1024  # 60 MB uploads ceiling
 
+
+@app.after_request
+def add_no_cache_headers(response):
+    """Every /api/ response (profile lists, details, stats, etc.) must never be
+    cached by the browser or any intermediary — otherwise a deleted or edited
+    profile can appear to 'come back' because a stale cached GET is served
+    instead of hitting the server again."""
+    if request.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
 # ---------------------------------------------------------------------------
 # All profile fields (order matters for CSV export/import & forms)
 # ---------------------------------------------------------------------------
@@ -58,13 +71,12 @@ PROFILE_FIELDS = [
     "languages_known", "about_yourself",
     "expected_age", "expected_height", "expected_education", "expected_profession",
     "expected_income", "expected_location", "expected_lifestyle",
-    "manglik", "rashi", "nakshatra", "mulank", "kundli_available", "birth_chart", "horoscope_notes",
+    "manglik", "kundli_available", "horoscope_notes",
     "disability", "special_notes",
-    "aadhar_number", "passport_number",
     "reference_name", "reference_relation",
 ]
 
-FILE_FIELDS = ["kundli_pdf", "aadhar_photo", "passport_photo"]  # single-file inputs
+FILE_FIELDS = ["kundli_pdf"]  # single-file inputs
 GALLERY_FIELD = "photos"  # multi-file input (profile photos)
 
 
@@ -306,24 +318,40 @@ def resolve_nakshatra(text):
 
 
 def compute_compatibility(bride, groom):
-    """Returns a dict with a simplified 4-factor Ashtakoot-style score.
-    bride/groom are profile dicts with 'rashi', 'nakshatra', 'manglik'."""
+    """Returns a dict with a Manglik compatibility check (always attempted),
+    plus an optional simplified 4-factor Ashtakoot-style score (Varna, Gana,
+    Nadi, Bhakoot) when Rashi/Nakshatra data happens to be available on both
+    profiles — this is legacy data, since the registration form no longer
+    collects Rashi/Nakshatra/Mulank/Birth Chart."""
+    manglik_b = (bride.get("manglik") or "").strip().lower()
+    manglik_g = (groom.get("manglik") or "").strip().lower()
+    manglik_note = "Manglik status not specified for one or both profiles."
+    manglik_ok = None
+    if manglik_b and manglik_g:
+        manglik_ok = (manglik_b == manglik_g) or "partial" in (manglik_b, manglik_g)
+        manglik_note = (
+            f"Bride: {bride.get('manglik')}, Groom: {groom.get('manglik')} — "
+            + ("compatible" if manglik_ok else "mismatch, traditionally a concern")
+        )
+
+    result = {
+        "available": True,
+        "manglik_ok": manglik_ok,
+        "manglik_note": manglik_note,
+        "ashtakoot_available": False,
+        "ashtakoot_reason": "Rashi/Nakshatra are no longer collected at registration, "
+                             "so a full Ashtakoot score isn't available for this pair.",
+        "disclaimer": ("This is a simplified screening aid, not a substitute for a full "
+                       "36-guna Milan from a qualified astrologer/pandit before finalizing "
+                       "any match."),
+    }
+
     b_rashi = resolve_rashi(bride.get("rashi"))
     g_rashi = resolve_rashi(groom.get("rashi"))
     b_nak = resolve_nakshatra(bride.get("nakshatra"))
     g_nak = resolve_nakshatra(groom.get("nakshatra"))
-
-    missing = []
-    if not b_rashi or not g_rashi:
-        missing.append("Rashi")
-    if not b_nak or not g_nak:
-        missing.append("Nakshatra")
-    if missing:
-        return {
-            "available": False,
-            "reason": f"Could not recognize {' and '.join(missing)} for one or both profiles. "
-                      f"Please check spelling of these fields on the profile(s).",
-        }
+    if not (b_rashi and g_rashi and b_nak and g_nak):
+        return result
 
     factors = []
 
@@ -358,30 +386,17 @@ def compute_compatibility(bride, groom):
     total = sum(f["score"] for f in factors)
     max_total = sum(f["max"] for f in factors)
 
-    manglik_b = (bride.get("manglik") or "").strip().lower()
-    manglik_g = (groom.get("manglik") or "").strip().lower()
-    manglik_note = "Manglik status not specified for one or both profiles."
-    manglik_ok = None
-    if manglik_b and manglik_g:
-        manglik_ok = (manglik_b == manglik_g) or "partial" in (manglik_b, manglik_g)
-        manglik_note = (
-            f"Bride: {bride.get('manglik')}, Groom: {groom.get('manglik')} — "
-            + ("compatible" if manglik_ok else "mismatch, traditionally a concern")
-        )
-
-    return {
-        "available": True,
-        "factors": factors,
-        "total": total,
-        "max_total": max_total,
-        "percentage": round((total / max_total) * 100) if max_total else 0,
-        "manglik_ok": manglik_ok,
-        "manglik_note": manglik_note,
-        "disclaimer": ("This is a simplified check covering 4 of the 8 traditional Ashtakoot "
-                       "factors (Varna, Gana, Nadi, Bhakoot) plus a Manglik check. It is a quick "
-                       "screening aid only — please consult a qualified astrologer/pandit for a "
-                       "complete 36-guna Milan before finalizing any match."),
-    }
+    result["ashtakoot_available"] = True
+    result.pop("ashtakoot_reason", None)
+    result["factors"] = factors
+    result["total"] = total
+    result["max_total"] = max_total
+    result["percentage"] = round((total / max_total) * 100) if max_total else 0
+    result["disclaimer"] = ("This is a simplified check covering 4 of the 8 traditional Ashtakoot "
+                            "factors (Varna, Gana, Nadi, Bhakoot) plus a Manglik check. It is a quick "
+                            "screening aid only — please consult a qualified astrologer/pandit for a "
+                            "complete 36-guna Milan before finalizing any match.")
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -629,6 +644,25 @@ def api_my_profile_password():
     return jsonify({"success": True})
 
 
+@app.route("/api/profile/<int:profile_id>/set-password", methods=["POST"])
+@login_required
+def api_admin_set_profile_password(profile_id):
+    """Admin resets a registrant's password directly — no current password needed,
+    since this is for cases where the member forgot theirs or an office staff
+    member is setting it up on their behalf."""
+    data = request.get_json(silent=True) or {}
+    new = data.get("new_password") or ""
+    if len(new) < 6:
+        return jsonify({"success": False, "message": "New password must be at least 6 characters"}), 400
+    db = get_db()
+    row = db.execute("SELECT id FROM profiles WHERE id = ?", (profile_id,)).fetchone()
+    if not row:
+        abort(404)
+    db.execute("UPDATE profiles SET password_hash = ? WHERE id = ?", (generate_password_hash(new), profile_id))
+    db.commit()
+    return jsonify({"success": True})
+
+
 @app.route("/api/my-profile/photos", methods=["POST"])
 @user_login_required
 def api_my_profile_add_photos():
@@ -847,7 +881,7 @@ def attach_photos(db, profile):
     profile["photo_list"] = [{"id": r["id"], "url": f"/uploads/{r['filepath']}", "is_primary": bool(r["is_primary"])} for r in rows]
     primary_row = next((r for r in rows if r["is_primary"]), rows[0] if rows else None)
     profile["primary_photo"] = f"/uploads/{primary_row['filepath']}" if primary_row else None
-    for f in ["kundli_pdf_path", "aadhar_photo_path", "passport_photo_path"]:
+    for f in ["kundli_pdf_path"]:
         if profile.get(f):
             profile[f] = f"/uploads/{profile[f]}"
     profile["completeness"] = compute_completeness(profile)
@@ -1410,7 +1444,7 @@ def biodata_lines(profile):
             g("phone", "Phone"), g("email", "Email"),
         ]),
         ("Astrological Details", [
-            g("manglik", "Manglik"), g("rashi", "Rashi"), g("nakshatra", "Nakshatra"),
+            g("manglik", "Manglik"), g("kundli_available", "Kundli Available"),
         ]),
         ("About", [g("about_yourself", "About")]),
     ]

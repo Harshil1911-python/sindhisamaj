@@ -156,7 +156,6 @@
     <a href="#sec-partner">Partner Preference</a>
     <a href="#sec-astro">Astrological</a>
     <a href="#sec-medical">Medical</a>
-    <a href="#sec-verify">Verification</a>
     <a href="#sec-photos">Photos</a>
     <a href="#sec-reference">Reference</a>
     <a href="#sec-account">Account</a>
@@ -338,9 +337,6 @@
             <option value="Partial">Partial</option>
           </select>
         </div>
-        <div class="field"><label for="rashi">Rashi</label><input type="text" id="rashi" name="rashi"></div>
-        <div class="field"><label for="nakshatra">Nakshatra</label><input type="text" id="nakshatra" name="nakshatra"></div>
-        <div class="field"><label for="mulank">Mulank</label><input type="text" id="mulank" name="mulank"></div>
         <div class="field"><label for="kundli_available">Kundli Available</label>
           <select id="kundli_available" name="kundli_available">
             <option value="No" selected>No</option>
@@ -352,7 +348,6 @@
           <input type="file" id="kundli_pdf" name="kundli_pdf" accept="application/pdf">
           <div class="file-note">PDF only, max 10 MB.</div>
         </div>
-        <div class="field full"><label for="birth_chart">Birth Chart Details</label><textarea id="birth_chart" name="birth_chart" placeholder="Any birth chart / planetary position notes."></textarea></div>
         <div class="field full"><label for="horoscope_notes">Horoscope Notes</label><textarea id="horoscope_notes" name="horoscope_notes"></textarea></div>
       </div>
     </fieldset>
@@ -365,24 +360,6 @@
       </div>
     </fieldset>
 
-    <fieldset id="sec-verify">
-      <legend>Verification Documents</legend>
-      <span class="legend-note">Uploaded as photos (JPG/PNG) or a scanned image. Used only for identity verification by the Samaj bureau and never shown on the public profile.</span>
-      <div class="grid2">
-        <div class="field"><label for="aadhar_number">Aadhar Number</label><input type="text" id="aadhar_number" name="aadhar_number" placeholder="XXXX XXXX XXXX"></div>
-        <div class="field">
-          <label for="aadhar_photo">Aadhar Photo</label>
-          <input type="file" id="aadhar_photo" name="aadhar_photo" accept="image/*">
-          <div class="file-note">JPG or PNG, max 10 MB.</div>
-        </div>
-        <div class="field"><label for="passport_number">Passport Number</label><input type="text" id="passport_number" name="passport_number" placeholder="Optional"></div>
-        <div class="field">
-          <label for="passport_photo">Passport Photo</label>
-          <input type="file" id="passport_photo" name="passport_photo" accept="image/*">
-          <div class="file-note">JPG or PNG, max 10 MB.</div>
-        </div>
-      </div>
-    </fieldset>
 
     <fieldset id="sec-photos">
       <legend>Photos</legend>
