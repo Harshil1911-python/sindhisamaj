@@ -165,17 +165,17 @@
 
     <div class="panel">
       <h2>Backup</h2>
-      <p class="desc">Download a full copy of the database (.db file) for safekeeping.</p>
+      <p class="desc">Download a full backup — database + all uploaded photos and Kundli PDFs — as a single .zip file.</p>
       <div class="row">
-        <a href="/backup" class="btn btn-gold">Download Backup</a>
+        <a href="/backup" class="btn btn-gold">Download Backup (.zip)</a>
       </div>
     </div>
 
     <div class="panel">
       <h2>Restore</h2>
-      <p class="desc">Replace the current database with a previously downloaded backup file.</p>
+      <p class="desc">Restore the database and all images from a previously downloaded .zip backup. (Old .db-only backups still work, but won't bring back images.)</p>
       <div class="row">
-        <input type="file" id="restoreFile" accept=".db,.sqlite,.sqlite3">
+        <input type="file" id="restoreFile" accept=".zip,.db,.sqlite,.sqlite3">
         <button class="btn btn-danger" id="restoreBtn">Restore</button>
       </div>
       <div class="msg" id="restoreMsg"></div>
@@ -230,7 +230,7 @@
 
   async function loadPending(){
     const list = document.getElementById('pendingList');
-    const res = await fetch('/api/profiles?status=Pending');
+    const res = await fetch('/api/profiles?status=Pending', {cache: 'no-store'});
     const d = await res.json();
     if (!d.success || d.count === 0){
       list.innerHTML = '<div class="pending-empty">No profiles waiting for approval.</div>';
@@ -303,8 +303,13 @@
     try {
       const res = await fetch('/restore', {method:'POST', body:fd});
       const d = await res.json();
-      if (d.success){ showMsg(el, 'Database restored successfully.', true); loadStats(); }
-      else showMsg(el, d.message || 'Restore failed.', false);
+      if (d.success){
+        const filesMsg = typeof d.restored_files === 'number' ? ` (${d.restored_files} image file(s) restored)` : '';
+        showMsg(el, (d.message || 'Database restored successfully.') + filesMsg, true);
+        loadStats();
+      } else {
+        showMsg(el, d.message || 'Restore failed.', false);
+      }
     } catch(e){ showMsg(el, 'Could not reach server.', false); }
   });
 

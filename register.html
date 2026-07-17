@@ -106,6 +106,17 @@
   textarea{resize:vertical; min-height:80px;}
   .file-note{font-size:0.76rem; color:var(--text-muted); margin-top:5px;}
 
+  .radio-group{display:flex; flex-direction:column; gap:12px; margin-top:6px;}
+  .radio-option{
+    display:flex; align-items:center; gap:10px; font-size:0.94rem; font-weight:500;
+    color:var(--ink); cursor:pointer; width:auto;
+  }
+  input[type="radio"]{
+    width:18px; height:18px; min-width:18px; margin:0; padding:0; flex-shrink:0;
+    accent-color:var(--maroon); background:none; border:none; cursor:pointer;
+  }
+  input[type="radio"]:focus{outline:none; box-shadow:0 0 0 3px rgba(139,30,63,0.18); border-radius:50%;}
+
   .submit-row{display:flex; align-items:center; gap:18px; margin-top:14px; flex-wrap:wrap;}
   .btn{
     display:inline-flex; align-items:center; justify-content:center;
@@ -329,13 +340,14 @@
     <fieldset id="sec-astro">
       <legend>Astrological Details</legend>
       <div class="grid3">
-        <div class="field"><label for="manglik">Manglik</label>
-          <select id="manglik" name="manglik">
-            <option value="" selected>Select</option>
-            <option value="Yes">Yes</option>
-            <option value="No">No</option>
-            <option value="Partial">Partial</option>
-          </select>
+        <div class="field full">
+          <label>Manglik Status</label>
+          <div class="radio-group">
+            <label class="radio-option"><input type="radio" name="manglik" value="Yes"> Yes</label>
+            <label class="radio-option"><input type="radio" name="manglik" value="No"> No</label>
+            <label class="radio-option"><input type="radio" name="manglik" value="Partial"> Partial</label>
+            <label class="radio-option"><input type="radio" name="manglik" value="Not Sure"> Not Sure</label>
+          </div>
         </div>
         <div class="field"><label for="kundli_available">Kundli Available</label>
           <select id="kundli_available" name="kundli_available">
@@ -443,7 +455,11 @@
     const values = {};
     form.querySelectorAll('input, select, textarea').forEach(el => {
       if (el.type === 'file' || !el.name) return;
-      values[el.name] = el.value;
+      if (el.type === 'radio' || el.type === 'checkbox'){
+        if (el.checked) values[el.name] = el.value;
+      } else {
+        values[el.name] = el.value;
+      }
     });
     return values;
   }
@@ -460,8 +476,16 @@
 
   function applyDraft(values){
     Object.entries(values).forEach(([name, val]) => {
-      const el = form.querySelector(`[name="${CSS.escape(name)}"]`);
-      if (el && el.type !== 'file') el.value = val;
+      const els = form.querySelectorAll(`[name="${CSS.escape(name)}"]`);
+      if (!els.length) return;
+      const first = els[0];
+      if (first.type === 'radio'){
+        els.forEach(r => { r.checked = (r.value === val); });
+      } else if (first.type === 'checkbox'){
+        first.checked = !!val;
+      } else if (first.type !== 'file'){
+        first.value = val;
+      }
     });
   }
 

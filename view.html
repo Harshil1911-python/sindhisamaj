@@ -216,6 +216,7 @@
           <span>–</span>
           <input type="number" id="f_age_max" placeholder="Age max">
         </div>
+        <select id="f_birth_year"><option value="">Birth Year — Any</option></select>
         <div class="age-range">
           <input type="number" id="f_birth_year_min" placeholder="Birth yr from" min="1900" max="2100">
           <span>–</span>
@@ -266,7 +267,7 @@
     <details class="fgroup">
       <summary>Astrological</summary>
       <div class="fgroup-body">
-        <select id="f_manglik"><option value="">Manglik — Any</option><option>Yes</option><option>No</option><option>Partial</option></select>
+        <select id="f_manglik"><option value="">Manglik — Any</option><option>Yes</option><option>No</option><option>Partial</option><option>Not Sure</option></select>
       </div>
     </details>
 
@@ -288,6 +289,7 @@
       <h1>Profiles</h1>
       <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
         <button id="compareModeBtn" class="btn-small btn-clear" style="padding:8px 16px; flex:none;">Compare Mode: Off</button>
+        <button id="bulkModeBtn" class="btn-small btn-clear" style="padding:8px 16px; flex:none;">Bulk Actions: Off</button>
         <div class="count-pill" id="countPill">Loading…</div>
       </div>
     </div>
@@ -296,6 +298,16 @@
       <div style="display:flex; gap:10px;">
         <button id="compareGoBtn" class="btn btn-gold" style="padding:9px 18px;" disabled>Compare Selected</button>
         <button id="compareClearBtn" class="btn btn-outline" style="padding:9px 18px; border-color:rgba(255,255,255,0.5); color:#fff;">Clear</button>
+      </div>
+    </div>
+    <div id="bulkBar" style="display:none; align-items:center; justify-content:space-between; gap:12px; background:var(--maroon); color:#fff; padding:12px 18px; border-radius:3px; margin-bottom:16px; flex-wrap:wrap;">
+      <span id="bulkBarText">0 selected</span>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button id="bulkSelectAllBtn" class="btn btn-outline" style="padding:9px 18px; border-color:rgba(255,255,255,0.5); color:#fff;">Select All Visible</button>
+        <button id="bulkApproveBtn" class="btn btn-gold" style="padding:9px 18px;" disabled>Approve</button>
+        <button id="bulkRejectBtn" class="btn btn-outline" style="padding:9px 18px; border-color:rgba(255,255,255,0.5); color:#fff;" disabled>Reject</button>
+        <button id="bulkDeleteBtn" class="btn btn-outline" style="padding:9px 18px; border-color:#fff; color:#fff; font-weight:700;" disabled>Delete Selected</button>
+        <button id="bulkClearBtn" class="btn btn-outline" style="padding:9px 18px; border-color:rgba(255,255,255,0.5); color:#fff;">Clear</button>
       </div>
     </div>
     <div class="card-grid" id="cardGrid"></div>
@@ -465,7 +477,7 @@
     marital_status: ["Single","Widow","Widower","Divorced","Separated"],
     smoking: ["No","Yes","Occasionally"],
     drinking: ["No","Yes","Occasionally"],
-    manglik: ["Yes","No","Partial"],
+    manglik: ["Yes","No","Partial","Not Sure"],
     status: ["Pending","Active","Inactive","Matched","Hold","Rejected"],
     reference_relation: ["Father","Mother","Brother","Sister","Relative","Friend","Bureau Staff","Other"],
   };
@@ -500,7 +512,7 @@
       current_city:'f_current_city', native_place:'f_native_place', sindhi_caste:'f_sindhi_caste',
       sub_caste:'f_sub_caste', qualification:'f_qualification', occupation:'f_occupation',
       blood_group:'f_blood_group', complexion:'f_complexion', body_type:'f_body_type',
-      food_preference:'f_food_preference'
+      food_preference:'f_food_preference', birth_year:'f_birth_year'
     };
     for (const [col, elId] of Object.entries(map)){
       const sel = document.getElementById(elId);
@@ -527,6 +539,8 @@
     const amax = document.getElementById('f_age_max').value;
     if (amin) params.set('age_min', amin);
     if (amax) params.set('age_max', amax);
+    const byExact = document.getElementById('f_birth_year').value;
+    if (byExact) params.set('birth_year', byExact);
     const bymin = document.getElementById('f_birth_year_min').value;
     const bymax = document.getElementById('f_birth_year_max').value;
     if (bymin) params.set('birth_year_min', bymin);
@@ -551,10 +565,12 @@
 
   let compareMode = false;
   let compareSelection = [];
+  let bulkMode = false;
+  let bulkSelection = [];
 
   function renderCard(p){
     const el = document.createElement('div');
-    el.className = 'p-card' + (compareMode ? ' compare-mode' : '');
+    el.className = 'p-card' + (compareMode || bulkMode ? ' compare-mode' : '');
     el.dataset.id = p.id;
     const photoHtml = p.primary_photo
       ? `<img src="${p.primary_photo}" alt="${p.full_name||''}">`
@@ -576,13 +592,15 @@
         </div>
       </div>`;
     el.addEventListener('click', (e) => {
-      if (compareMode){
+      if (bulkMode){
+        toggleBulkSelect(p.id, el);
+      } else if (compareMode){
         toggleCompareSelect(p.id, el);
       } else {
         openModal(p.id);
       }
     });
-    if (compareSelection.includes(p.id)) el.classList.add('compare-selected');
+    if (compareSelection.includes(p.id) || bulkSelection.includes(p.id)) el.classList.add('compare-selected');
     return el;
   }
 
@@ -614,6 +632,12 @@
   document.getElementById('compareModeBtn').addEventListener('click', () => {
     compareMode = !compareMode;
     compareSelection = [];
+    if (compareMode && bulkMode){
+      bulkMode = false;
+      bulkSelection = [];
+      document.getElementById('bulkModeBtn').textContent = 'Bulk Actions: Off';
+      document.getElementById('bulkBar').style.display = 'none';
+    }
     document.getElementById('compareModeBtn').textContent = 'Compare Mode: ' + (compareMode ? 'On' : 'Off');
     document.getElementById('compareBar').style.display = compareMode ? 'flex' : 'none';
     updateCompareBar();
@@ -628,6 +652,84 @@
 
   document.getElementById('compareGoBtn').addEventListener('click', () => {
     if (compareSelection.length === 2) openCompareModal(compareSelection[0], compareSelection[1]);
+  });
+
+  function toggleBulkSelect(id, el){
+    const idx = bulkSelection.indexOf(id);
+    if (idx >= 0){
+      bulkSelection.splice(idx, 1);
+      el.classList.remove('compare-selected');
+    } else {
+      bulkSelection.push(id);
+      el.classList.add('compare-selected');
+    }
+    updateBulkBar();
+  }
+
+  function updateBulkBar(){
+    document.getElementById('bulkBarText').textContent = bulkSelection.length + ' selected';
+    const has = bulkSelection.length > 0;
+    document.getElementById('bulkApproveBtn').disabled = !has;
+    document.getElementById('bulkRejectBtn').disabled = !has;
+    document.getElementById('bulkDeleteBtn').disabled = !has;
+  }
+
+  document.getElementById('bulkModeBtn').addEventListener('click', () => {
+    bulkMode = !bulkMode;
+    bulkSelection = [];
+    if (bulkMode && compareMode){
+      compareMode = false;
+      compareSelection = [];
+      document.getElementById('compareModeBtn').textContent = 'Compare Mode: Off';
+      document.getElementById('compareBar').style.display = 'none';
+    }
+    document.getElementById('bulkModeBtn').textContent = 'Bulk Actions: ' + (bulkMode ? 'On' : 'Off');
+    document.getElementById('bulkBar').style.display = bulkMode ? 'flex' : 'none';
+    updateBulkBar();
+    loadProfiles();
+  });
+
+  document.getElementById('bulkClearBtn').addEventListener('click', () => {
+    bulkSelection = [];
+    updateBulkBar();
+    loadProfiles();
+  });
+
+  document.getElementById('bulkSelectAllBtn').addEventListener('click', () => {
+    bulkSelection = Array.from(document.querySelectorAll('#cardGrid .p-card')).map(el => parseInt(el.dataset.id, 10));
+    updateBulkBar();
+    loadProfiles();
+  });
+
+  async function runBulkAction(action, confirmMsg){
+    if (!bulkSelection.length) return;
+    if (confirmMsg && !confirm(confirmMsg)) return;
+    try {
+      const res = await fetch('/api/profiles/bulk-action', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ids: bulkSelection, action})
+      });
+      const d = await res.json();
+      if (d.success){
+        bulkSelection = [];
+        updateBulkBar();
+        loadProfiles();
+      } else {
+        alert(d.message || 'Bulk action failed.');
+      }
+    } catch (e){
+      alert('Could not reach server.');
+    }
+  }
+
+  document.getElementById('bulkApproveBtn').addEventListener('click', () => {
+    runBulkAction('approve', `Approve ${bulkSelection.length} selected profile(s)?`);
+  });
+  document.getElementById('bulkRejectBtn').addEventListener('click', () => {
+    runBulkAction('reject', `Reject ${bulkSelection.length} selected profile(s)?`);
+  });
+  document.getElementById('bulkDeleteBtn').addEventListener('click', () => {
+    runBulkAction('delete', `Permanently delete ${bulkSelection.length} selected profile(s)? This cannot be undone.`);
   });
 
   async function openCompareModal(idA, idB){

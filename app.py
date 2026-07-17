@@ -11,6 +11,7 @@ import re
 import uuid
 import sqlite3
 import secrets
+import zipfile
 from datetime import datetime, date
 from functools import wraps
 
@@ -328,11 +329,17 @@ def compute_compatibility(bride, groom):
     manglik_note = "Manglik status not specified for one or both profiles."
     manglik_ok = None
     if manglik_b and manglik_g:
-        manglik_ok = (manglik_b == manglik_g) or "partial" in (manglik_b, manglik_g)
-        manglik_note = (
-            f"Bride: {bride.get('manglik')}, Groom: {groom.get('manglik')} — "
-            + ("compatible" if manglik_ok else "mismatch, traditionally a concern")
-        )
+        if "not sure" in (manglik_b, manglik_g):
+            manglik_note = (
+                f"Bride: {bride.get('manglik')}, Groom: {groom.get('manglik')} — "
+                "status unconfirmed for one or both, so compatibility can't be determined."
+            )
+        else:
+            manglik_ok = (manglik_b == manglik_g) or "partial" in (manglik_b, manglik_g)
+            manglik_note = (
+                f"Bride: {bride.get('manglik')}, Groom: {groom.get('manglik')} — "
+                + ("compatible" if manglik_ok else "mismatch, traditionally a concern")
+            )
 
     result = {
         "available": True,
@@ -930,8 +937,12 @@ def api_profiles():
         q += " AND age <= ?"
         args.append(age_max)
 
+    birth_year = request.args.get("birth_year")
     birth_year_min = request.args.get("birth_year_min")
     birth_year_max = request.args.get("birth_year_max")
+    if birth_year:
+        q += " AND substr(dob, 1, 4) = ?"
+        args.append(str(birth_year))
     if birth_year_min:
         q += " AND CAST(substr(dob, 1, 4) AS INTEGER) >= ?"
         args.append(birth_year_min)
@@ -962,6 +973,13 @@ def api_filter_options():
     for c in cols:
         rows = db.execute(f"SELECT DISTINCT {c} FROM profiles WHERE {c} IS NOT NULL AND {c} != '' ORDER BY {c}").fetchall()
         options[c] = [r[0] for r in rows]
+
+    year_rows = db.execute(
+        """SELECT DISTINCT substr(dob, 1, 4) AS yr FROM profiles
+           WHERE dob IS NOT NULL AND dob != '' ORDER BY yr DESC"""
+    ).fetchall()
+    options["birth_year"] = [r[0] for r in year_rows if r[0] and r[0].isdigit()]
+
     return jsonify({"success": True, "options": options})
 
 
@@ -1051,6 +1069,36 @@ def api_profile_delete(profile_id):
     db.execute("DELETE FROM profiles WHERE id = ?", (profile_id,))
     db.commit()
     return jsonify({"success": True})
+
+
+@app.route("/api/profiles/bulk-action", methods=["POST"])
+@login_required
+def api_profiles_bulk_action():
+    data = request.get_json(silent=True) or {}
+    ids = data.get("ids") or []
+    action = data.get("action")
+    if not ids or action not in {"delete", "approve", "reject"}:
+        return jsonify({"success": False, "message": "Provide a list of profile ids and a valid action."}), 400
+
+    try:
+        ids = [int(i) for i in ids]
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "message": "Invalid profile id in list."}), 400
+
+    db = get_db()
+    placeholders = ",".join("?" * len(ids))
+    affected = db.execute(f"SELECT COUNT(*) FROM profiles WHERE id IN ({placeholders})", ids).fetchone()[0]
+
+    if action == "delete":
+        db.execute(f"DELETE FROM profiles WHERE id IN ({placeholders})", ids)
+    elif action == "approve":
+        db.execute(f"UPDATE profiles SET status = 'Active', updated_at = ? WHERE id IN ({placeholders})",
+                   [datetime.utcnow().isoformat()] + ids)
+    elif action == "reject":
+        db.execute(f"UPDATE profiles SET status = 'Rejected', updated_at = ? WHERE id IN ({placeholders})",
+                   [datetime.utcnow().isoformat()] + ids)
+    db.commit()
+    return jsonify({"success": True, "action": action, "affected": affected})
 
 
 @app.route("/api/profile/<int:profile_id>/photos", methods=["POST"])
@@ -1403,19 +1451,85 @@ def import_xlsx():
 @app.route("/backup")
 @login_required
 def backup_db():
-    fname = f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
-    return send_file(DB_PATH, as_attachment=True, download_name=fname)
+    """Bundles database.db together with every file in uploads/ (photos,
+    Kundli PDFs, etc.) into a single zip, so a restore brings back images
+    too, not just the profile data."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.write(DB_PATH, arcname="database.db")
+        for root, _dirs, files in os.walk(UPLOAD_DIR):
+            for fname in files:
+                if fname.startswith("."):
+                    continue
+                full_path = os.path.join(root, fname)
+                rel_path = os.path.relpath(full_path, UPLOAD_DIR)
+                zf.write(full_path, arcname=os.path.join("uploads", rel_path))
+    buf.seek(0)
+    fname = f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+    return send_file(buf, mimetype="application/zip", as_attachment=True, download_name=fname)
 
 
 @app.route("/restore", methods=["POST"])
 @login_required
 def restore_db():
     file = request.files.get("file")
-    if not file or not allowed_ext(file.filename, ALLOWED_DB_EXT):
-        return jsonify({"success": False, "message": "Please upload a valid .db backup file"}), 400
-    close_db()
-    file.save(DB_PATH)
-    return jsonify({"success": True})
+    if not file or not file.filename:
+        return jsonify({"success": False, "message": "Please choose a backup file."}), 400
+
+    fname_lower = file.filename.lower()
+
+    if fname_lower.endswith(".zip"):
+        try:
+            zf = zipfile.ZipFile(file.stream)
+        except zipfile.BadZipFile:
+            return jsonify({"success": False, "message": "That doesn't look like a valid backup zip file."}), 400
+
+        names = zf.namelist()
+        if "database.db" not in names:
+            return jsonify({"success": False, "message": "This zip doesn't contain a database.db — is it a real backup file?"}), 400
+
+        close_db()
+        with zf.open("database.db") as src, open(DB_PATH, "wb") as dst:
+            dst.write(src.read())
+
+        # replace uploads/ entirely with what's in the backup, so deleted
+        # files don't linger and everything matches the backup exactly
+        for existing in os.listdir(UPLOAD_DIR):
+            if existing.startswith("."):
+                continue
+            existing_path = os.path.join(UPLOAD_DIR, existing)
+            if os.path.isfile(existing_path):
+                os.remove(existing_path)
+
+        restored_files = 0
+        for name in names:
+            if name == "database.db" or name.endswith("/"):
+                continue
+            if name.startswith("uploads/"):
+                rel = name[len("uploads/"):]
+                if not rel or ".." in rel:
+                    continue
+                dest_path = os.path.join(UPLOAD_DIR, rel)
+                os.makedirs(os.path.dirname(dest_path) or UPLOAD_DIR, exist_ok=True)
+                with zf.open(name) as src, open(dest_path, "wb") as dst:
+                    dst.write(src.read())
+                restored_files += 1
+
+        zf.close()
+        return jsonify({"success": True, "restored_files": restored_files})
+
+    elif allowed_ext(file.filename, ALLOWED_DB_EXT):
+        # backward compatibility: a raw .db file with no images, from an
+        # older backup taken before this feature existed
+        close_db()
+        file.save(DB_PATH)
+        return jsonify({
+            "success": True,
+            "restored_files": 0,
+            "message": "Database restored, but this was a database-only backup file (no images included)."
+        })
+
+    return jsonify({"success": False, "message": "Please upload a .zip backup file (or a legacy .db file)."}), 400
 
 
 # ---------------------------------------------------------------------------

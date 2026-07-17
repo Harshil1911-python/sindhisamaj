@@ -276,3 +276,60 @@ Password).
   image-carousel design) — nothing in the backend depends on its internals
   beyond the links to `register.html` and `signin.html`, which are unchanged.
 
+### Manglik Status: radio buttons instead of a dropdown
+- `register.html`'s Manglik Status field is now a **radio button group**
+  (Yes / No / Partial / Not Sure) instead of a select dropdown, matching
+  the style you wanted (no "drawer"/dropdown for this field).
+- Added a **"Not Sure"** option that wasn't there before.
+- Fixed a latent bug this exposed: the Save & Resume draft feature
+  (`register.html`'s auto-save-to-browser-storage) was written assuming
+  every field was a plain text/select input. It would have mis-saved and
+  mis-restored radio button groups (grabbing whichever radio happened to
+  be last in the DOM, and not actually re-selecting the right one on
+  resume). Both the save and resume logic now correctly handle radio
+  (and checkbox) inputs.
+- "Not Sure" was added everywhere Manglik shows up as a dropdown for
+  consistency: the admin edit screen (`view.html`), the registrant
+  dashboard (`dashboard.html`), and the Manglik filter in Walk-in View.
+- The horoscope compatibility check now treats **"Not Sure" as
+  indeterminate** rather than assuming compatibility — if either profile's
+  Manglik status is "Not Sure," the result explains it can't be determined
+  instead of guessing.
+- `landing.html` updated again to your latest version (new address, "Free"
+  branding, Hindi title) — same as before, it only links to
+  `register.html`/`signin.html` so nothing else needed to change.
+
+### Bulk Actions (delete, approve, reject)
+- `view.html` now has a **"Bulk Actions"** toggle next to Compare Mode.
+  Turning it on shows a checkbox on every card — select as many profiles
+  as you like (or click "Select All Visible" to grab everyone currently
+  filtered into view), then **Approve**, **Reject**, or **Delete** all of
+  them in one action, each with a confirmation prompt. Compare Mode and
+  Bulk Actions are mutually exclusive — turning one on switches the other
+  off automatically, so there's no confusion about what a click on a card
+  does.
+- Backed by a new `POST /api/profiles/bulk-action` endpoint that applies
+  the action to a whole list of profile IDs in one transaction.
+
+### Birth Year filter, made easier to find
+- Added a plain **"Birth Year"** dropdown (populated with the actual years
+  present in your data) right next to the existing birth-year *range*
+  filter — so "show me everyone born in 1990" is now a single dropdown
+  pick instead of typing the same year into both the "from" and "to" range
+  boxes. Both options remain available depending on whether you want an
+  exact year or a range.
+
+### Bug fix: backup/restore now includes photos and Kundli PDFs
+- **Found the cause.** Backup only ever downloaded the raw `database.db`
+  file — it never included anything in `uploads/` (profile photos, Kundli
+  PDFs), so restoring brought back all the profile data but every photo
+  link pointed at a file that no longer existed.
+- Backup now downloads a single **`.zip`** file containing `database.db`
+  plus every file in `uploads/`. Restore accepts that `.zip` and puts both
+  back exactly as they were — re-tested end-to-end with real image and PDF
+  files to confirm they survive a full backup → wipe → restore cycle.
+- Old database-only `.db`/`.sqlite`/`.sqlite3` backups from before this fix
+  still work for restore (for backward compatibility) — you'll just get a
+  note that no images came back with it, since there weren't any in that
+  older backup format to begin with.
+
